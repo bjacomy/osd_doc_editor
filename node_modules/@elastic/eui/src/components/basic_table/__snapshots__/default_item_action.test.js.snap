@@ -1,0 +1,28 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DefaultItemAction render - button 1`] = `
+<EuiButton
+  color="primary"
+  fill={false}
+  iconSide="left"
+  isDisabled={false}
+  onClick={[Function]}
+  size="s"
+  title="action 1"
+  type="button"
+>
+  action1
+</EuiButton>
+`;
+
+exports[`DefaultItemAction render - icon 1`] = `
+<EuiButtonIcon
+  aria-label="action1"
+  color="primary"
+  iconType="trash"
+  isDisabled={false}
+  onClick={[Function]}
+  title="action 1"
+  type="button"
+/>
+`;

@@ -40,6 +40,9 @@ import {
   EuiRange,
   EuiSwitch,
   EuiSelect,
+  EuiText,
+  EuiTextColor,
+  EuiTitle,
 } from '@elastic/eui';
 
 import {
@@ -54,12 +57,19 @@ export default class extends Component {
   constructor(props) {
     super(props);
 
+    this.columnsType = [
+      { value: 'choose type', text: 'choose type' , "disabled" : true },
+      { value: 'text', text: 'text' },
+      { value: 'double', text: 'double' },
+      { value: 'boolean', text: 'boolean' },
+    ];
+
     this.state = {
       itemIdToSelectedMap: {},
       itemIdToOpenActionsPopoverMap: {},
       sortedColumn: 'title',
-      itemsPerPage: 20,
-      tabNames: this.props.names,
+      itemsPerPage: 10,
+      searchValue:'',
       index: this.props.names,
       isModalVisible: false,
       isModalValueVisible: false,
@@ -68,13 +78,15 @@ export default class extends Component {
       inputLabel: '',
       columns:[],
       items: this.props.names,
+      allItems:[],
       value: '',
+      typeValue: '',
     };
 
     this.items =  this.props.names;
     this.columnsProp = this.props.colonne;
-    ////
-
+    this.searchTab = this.props.recherche;
+    this.total = this.props.total;
     this.sortableProperties = new SortableProperties([{
       name: 'title',
       getValue: item => item._id.toLowerCase(),
@@ -92,15 +104,17 @@ export default class extends Component {
 
     this.state.columns =this.columnList();
 
-    this.pager = new Pager(this.state.items.length, this.state.itemsPerPage);
+    this.pager = new Pager(this.total, this.state.itemsPerPage);
     this.state.firstItemIndex = this.pager.getFirstItemIndex();
     this.state.lastItemIndex = this.pager.getLastItemIndex();
 
+    console.log(this.state.items);
     this.closeModal = this.closeModal.bind(this);
     this.closeModalValue = this.closeModalValue.bind(this);
     this.showModal = this.showModal.bind(this);
     this.showModalValue = this.showModalValue.bind(this);
     this.columnList = this.columnList.bind(this);
+    this.mySearch = this.mySearch.bind(this);
     var self = this.state.items;
   }
 
@@ -126,35 +140,55 @@ export default class extends Component {
     console.log(e.target.value);
   }
 
-  GetMapping= () => {
-  var mapping_request = '{"properties": {';
-    mapping_request += '"'+ this.state.inputLabel +'": { "type": "text" }';
-    mapping_request += '} }';
-
-    return mapping_request;
+  onChangeSelectType = e => {
+    this.setState({
+      typeValue: e.target.value,
+    });
+    console.log(e.target.value);
   }
 
-  
+  GetMapping= () => {
+    var mapReq = {};
+    var type = {};
+    type["type"] = this.state.typeValue;
+    var property = {};
+    property[this.state.inputLabel] = type;
+    mapReq["properties"] = property;
+    return mapReq;
+  }
+
+
   saveLabel= () => {
     let body = this.GetMapping();
-    //console.log(body);
-    let index = this.state.index[0]._index;
-    fetch("../api/label/transactions/_mapping/sales", {
+    let index = this.state.items[0]._index;
+    let type = this.state.items[0]._type;
+    fetch("../api/label/"+index+"/_mapping/"+type, {
         method: 'put',
         headers: {
           'Content-Type': 'application/json',
           'kbn-xsrf': 'reporting'
         },
-        body:body
+        body:JSON.stringify(body)
       })
       .then(res => res.json())
       .then(
         (result) => {
-          //console.log("result"+body);
-          //console.log(result);
+          let col = {
+          id: this.state.inputLabel,
+          label: this.state.inputLabel,
+          alignment: LEFT_ALIGNMENT,
+          isSortable: true,
+          };
+          this.state.columns.splice(this.state.columns.length - 1, 0, col);
+
+          let select = {
+              text: this.state.inputLabel,
+              value: this.state.inputLabel,
+              };
+              this.columnsProp.push(select);
         },
         (error) => {
-          
+
         }
       )
       this.closeModal();
@@ -164,14 +198,14 @@ export default class extends Component {
     let secondBody = {};
     secondBody[this.state.value] = this.state.inputValue;
     let body = {
-      "doc": secondBody 
+      "doc": secondBody
     };
 
-    console.log(body);
-    let index = this.state.index[0]._index;
+    let index = this.state.items[0]._index;
+    let type = this.state.items[0]._type;
     for (var property1 in this.state.itemIdToSelectedMap) {
       if(this.state.itemIdToSelectedMap[property1]){
-      fetch("../api/label/transactions/sales/"+property1+"/_update", {
+      fetch("../api/label/"+index+"/"+type+"/"+property1+"/_update", {
           method: 'post',
           headers: {
             'Content-Type': 'application/json',
@@ -185,7 +219,7 @@ export default class extends Component {
 
           },
           (error) => {
-            
+
           }
       )
       }
@@ -195,8 +229,9 @@ export default class extends Component {
   }
 
   refreshItems= () => {
-    let index = this.state.index[0]._index;
-    fetch("../api/label/search/transactions", {
+    let index = this.state.items[0]._index;
+    let type = this.state.items[0]._type;
+    fetch("../api/label/search/"+index, {
         method: 'get',
         headers: {
           'Content-Type': 'application/json'
@@ -205,9 +240,24 @@ export default class extends Component {
       .then(res => res.json())
       .then(
         (result) => {
-          var newItems = result.hits.hits;
-          /////
-          fetch("../api/label/transactions/_mapping/sales", {
+          this.requestMapping(result.hits.total, result.hits.hits, null);
+          this.setState({
+            items: result.hits.hits
+          })
+          console.log(result.hits.hits);
+          return result.hits.hits
+        },
+        (error) => {
+
+        }
+      )
+  }
+
+  requestMapping= (total, newItems, pageIndex) => {
+    let index = this.state.items[0]._index;
+    let type = this.state.items[0]._type;
+
+          fetch("../api/label/"+index+"/_mapping", {
             method: 'get',
             headers: {
               'Content-Type': 'application/json'
@@ -218,7 +268,7 @@ export default class extends Component {
             (result) => {
               var mapping = result;
               for (var v in  newItems) {
-                for (var key in  mapping["transactions"]["mappings"]["sales"]["properties"]) {
+                for (var key in  mapping[index]["mappings"][type]["properties"]) {
                   if(newItems[v]._source[key])
                   {newItems[v][key]=newItems[v]._source[key];}
                   else
@@ -226,25 +276,32 @@ export default class extends Component {
                 }
               }
 
-              this.setState({
-                items: newItems
-              })
-              
+              this.pager = new Pager(total , this.state.itemsPerPage);
+              if(this.pager.totalPages - 1 == pageIndex){
+                console.log("ici");
+                this.setState({
+                  items: newItems,
+                  lastItemIndex: (total % 10) - 1,
+                });
+              }else {
+                this.setState({
+                  firstItemIndex: this.pager.getFirstItemIndex(),
+                  lastItemIndex: this.pager.getLastItemIndex(),
+                  items: newItems,
+                });
+              }
+
+              console.log(this.pager);
+              console.log(this.state.firstItemIndex);
+              console.log(this.state.lastItemIndex);
+              if (pageIndex != null) {
+                  this.pager.goToPageIndex(pageIndex);
+              }
             },
             (error) => {
-              
-            }
-          )  
-              ////
 
-          this.setState({
-            items: newItems
-          })
-        },
-        (error) => {
-              
-        }
-      )
+            }
+          )
   }
 
   handle(event){
@@ -269,8 +326,83 @@ export default class extends Component {
 
   showModal() {
     this.setState({ isModalVisible: true });
-    console.log(this.areAnyRowsSelected());
+
   }
+
+  mySearch= (event) => {
+      this.setState({ searchValue: event.target.value });
+      var exempleTimeout = setTimeout(this.Search(event.target.value, 0), 0);
+  }
+
+  Search = (varS, from) => {
+    console.log(this.columnsProp);
+    console.log(this.searchTab);
+        let index = this.state.items[0]._index;
+        let type = this.state.items[0]._type;
+        var body = {};var query = {};
+        query["match_all"] = {};
+        body["query"] = query;
+        body["size"] = 10;
+        body["from"] = from;
+        var fields = this.searchTab;
+        if(varS != ''){
+          if(varS.indexOf(":") != -1){
+              if (varS.lastIndexOf(":") == varS.indexOf(":")) {
+                var multi_match = {};
+                var query = {};
+                var searchField = varS.split(":");
+                multi_match["default_field"] = searchField[0];
+                multi_match["query"] = searchField[1];
+                query["query_string"] = multi_match;
+                body["query"] = query;
+                body["size"] = 10;
+                body["from"] = from;
+              }
+              else {
+                var multi_match = {};
+                var query = {};
+                multi_match["query"] = varS;
+                query["query_string"] = multi_match;
+                body["query"] = query;
+                body["size"] = 10;
+                body["from"] = from;
+              }
+          }else{
+                var multi_match = {};
+                var query = {};
+                multi_match["fields"] = fields;
+                multi_match["query"] = varS;
+                multi_match["type"] = "phrase_prefix";
+                query["multi_match"] = multi_match;
+                body["query"] = query;
+                body["size"] = 10;
+                body["from"] = from;
+          }
+        }
+        console.log(body);
+    fetch("../api/label/"+index+"/_search", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'kbn-xsrf': 'reporting'
+        },
+        body: JSON.stringify(body)
+      })
+      .then(res => res.json())
+      .then(
+        (result) => {
+
+          if(result.hits.hits.length > 0){
+            console.log("result if length"+ from);
+            this.requestMapping(result.hits.total, result.hits.hits, from/10 )
+          }
+        },
+        (error) => {
+
+        }
+      )
+  }
+
 
   showModalValue= () => {
     this.setState({ isModalValueVisible: true });
@@ -308,8 +440,8 @@ export default class extends Component {
       width: '32px',
     };
     tab.push(act);
-    //console.log(tab);
-    //this.columnsProp = [];
+
+    selectTab.push({ value: 'choose label', text: 'choose label' , "disabled" : true });
     for (var v in this.columnsProp) {
       let select = {
           text: this.columnsProp[v],
@@ -318,7 +450,7 @@ export default class extends Component {
           selectTab.push(select);
     }
     this.columnsProp = [];
-    this.columnsProp = selectTab; 
+    this.columnsProp = selectTab;
 
     return tab;
   }
@@ -333,12 +465,51 @@ export default class extends Component {
   }
 
   onChangePage = pageIndex => {
-    this.pager.goToPageIndex(pageIndex);
+    /*this.pager.goToPageIndex(pageIndex);
     this.setState({
       firstItemIndex: this.pager.getFirstItemIndex(),
       lastItemIndex: this.pager.getLastItemIndex(),
     });
+    console.log(this.pager.getCurrentPageIndex());
+    console.log(this.pager.getTotalPages());
+    console.log(this.pager);*/
+//console.log(pageIndex);
+  if(this.state.searchValue != ''){
+    var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * 10), 500);
+  }else {
+    let index = this.state.items[0]._index;
+    let type = this.state.items[0]._type;
+    var body = {};var query = {};
+    query["match_all"] = {};
+    body["query"] = query;
+    body["from"] = pageIndex * 10 ;
+    body["size"] = 10;
+
+    fetch("../api/label/"+index+"/_search", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'kbn-xsrf': 'reporting'
+        },
+        body: JSON.stringify(body)
+      })
+      .then(res => res.json())
+      .then(
+        (result) => {
+          console.log(result);
+          //console.log(this.state.items);
+          console.log(pageIndex);
+          //this.searchAll(result.hits.total);
+          this.requestMapping(result.hits.total, result.hits.hits , pageIndex)
+        },
+        (error) => {
+
+        }
+      )
+    }
+
   };
+
 
   onSort = prop => {
     this.sortableProperties.sortOn(prop);
@@ -363,11 +534,13 @@ export default class extends Component {
   toggleAll = () => {
     const allSelected = this.areAllItemsSelected();
     const newItemIdToSelectedMap = {};
+    //this.searchAll(this.total)
     this.state.items.forEach(item => newItemIdToSelectedMap[item._id] = !allSelected);
 
     this.setState({
       itemIdToSelectedMap: newItemIdToSelectedMap,
     });
+    console.log(this.state.itemIdToSelectedMap);
   }
 
   isItemSelected = itemId => {
@@ -452,8 +625,42 @@ export default class extends Component {
     const renderRow = item => {
       const cells = this.state.columns.map(column => {
         const cell = item[column.id];
-
+        let poptab;
+        let key;let val;
+        let popkey;
+        let act = "";
         let child;
+        //const popover = this.state.items.map(i => {
+            poptab = Object.values(item);
+            popkey = Object.keys(item);
+
+
+            const keyValue = popkey.map(k => {
+              if(k != "_source")
+              { key = k + ":";
+                val = item[k];}
+              else {
+                key = null;
+                val = null;
+              }
+              return (
+                <p key={key}> <span style={{ background: '#D9D9D9' }}>
+                      <EuiTextColor>
+                        {key}
+                      </EuiTextColor>
+                    </span>    {val}
+
+                </p>
+
+              );
+
+              //console.log(k)
+            }
+
+
+            );
+
+
 
         if (column.isCheckbox) {
           return (
@@ -489,9 +696,11 @@ export default class extends Component {
                 isOpen={this.isPopoverOpen(item._id)}
                 closePopover={() => this.closePopover(item._id)}
                 panelPaddingSize="none"
-                anchorPosition="leftCenter"
+                anchorPosition="leftUp"
+
               >
                 <EuiContextMenuPanel
+                style={{ width: '600px',height: 20 * Object.keys(this.state.items[0]).length}}
                   items={[
                     (
                       <EuiContextMenuItem
@@ -499,25 +708,9 @@ export default class extends Component {
                         icon="pencil"
                         onClick={() => { this.closePopover(item._id); }}
                       >
-                        Edit
+                        {keyValue}
                       </EuiContextMenuItem>
-                    ), (
-                      <EuiContextMenuItem
-                        key="B"
-                        icon="share"
-                        onClick={() => { this.closePopover(item._id); }}
-                      >
-                        Share
-                      </EuiContextMenuItem>
-                    ), (
-                      <EuiContextMenuItem
-                        key="C"
-                        icon="trash"
-                        onClick={() => { this.closePopover(item._id); }}
-                      >
-                        Delete
-                      </EuiContextMenuItem>
-                    ),
+                    )
                   ]}
                 />
               </EuiPopover>
@@ -574,7 +767,7 @@ export default class extends Component {
           <EuiFieldText name="popValue" onChange={this.handleValue.bind(this)}/>
         </EuiFormRow>
 
-        
+
       </EuiForm>
     );
 
@@ -595,12 +788,15 @@ export default class extends Component {
 
             <EuiModalBody>
               <Fragment>
+              <EuiFormRow
+                label="Label"
+              >
         <EuiSelect
           options={this.columnsProp}
-          //value={this.state.value}
+          defaultValue={this.columnsProp[0].value}
           onChange={this.onChangeSelect}
         />
-
+        </EuiFormRow>
 
               <EuiSpacer size="m" />
           </Fragment>
@@ -637,15 +833,13 @@ export default class extends Component {
 
     const formSample = (
       <EuiForm>
-        
+
 
         <EuiFormRow
           label="Label"
         >
           <EuiFieldText name="popfirst" onChange={this.handle.bind(this)}/>
         </EuiFormRow>
-
-        
       </EuiForm>
     );
 
@@ -667,6 +861,18 @@ export default class extends Component {
 
             <EuiModalBody>
               {formSample}
+              <Fragment>
+              <EuiSpacer size="m" />
+              <EuiFormRow
+                label="Type"
+              >
+        <EuiSelect
+          options={this.columnsType}
+          defaultValue={this.columnsType[0].value}
+          onChange={this.onChangeSelectType}
+        />
+        </EuiFormRow>
+          </Fragment>
             </EuiModalBody>
 
             <EuiModalFooter>
@@ -688,7 +894,7 @@ export default class extends Component {
       );
     }
 
-    
+
 
     return (
       <div>
@@ -696,7 +902,7 @@ export default class extends Component {
           {optionalActionButtons}
 
           <EuiFlexItem>
-            <EuiFieldSearch fullWidth placeholder="Search..." />
+            <EuiFieldSearch fullWidth onChange={this.mySearch.bind(this)} placeholder="Search..." />
           </EuiFlexItem>
           <EuiFlexItem grow={false}>
           <div>

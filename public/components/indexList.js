@@ -11,6 +11,9 @@ import {
   EuiButton,
   EuiFlexGroup,
   EuiFlexItem,
+  EuiText,
+  EuiTextColor,
+  EuiTitle,
 } from '@elastic/eui';
 
 export default class extends Component {
@@ -18,7 +21,6 @@ export default class extends Component {
     super(props);
 
     this.indices = this.props.names;
-    
 
     const idPrefix = '1';
 
@@ -26,10 +28,10 @@ export default class extends Component {
 
     //this.index = this.state.value;
     let groupOptions = [];
-    
+
     this.state = {
       checkboxes: [],
-      value: this.indices[0].value,
+      value: '',
       link:'',
       checkboxIdToSelectedMap: {},
     };
@@ -52,8 +54,8 @@ export default class extends Component {
     this.setState({
       checkboxIdToSelectedMap: newCheckboxIdToSelectedMap,
     });
-    
-     var exempleTimeout = setTimeout(this.columnParam, 1000); 
+
+     var exempleTimeout = setTimeout(this.columnParam, 1000);
 
   };
 
@@ -62,22 +64,34 @@ export default class extends Component {
       value: e.target.value,
     });
     console.log(e.target.value);
-    fetch("../api/label/"+e.target.value+"/_mapping/sales", {
+    fetch("../api/label/"+e.target.value+"/_mapping", {
         method: 'get',
       })
       .then(res => res.json())
       .then(
         (result) => {
-          console.log(result);
+          var type = Object.keys(result[this.state.value]["mappings"])[0];
           var colonne = [];
           var i = 0;
-          for (var key in  result[this.state.value]["mappings"]["sales"]["properties"]) {
-            var c = {};
-            console.log(key);
-            c["id"] = i.toString();
-            c["label"] = key;
-            colonne.push(c);
-            i++;
+          for (var key in  result[this.state.value]["mappings"][type]["properties"]) {
+            if(! result[this.state.value]["mappings"][type]["properties"][key]["type"]){
+              for (var subkey in  result[this.state.value]["mappings"][type]["properties"][key]["properties"]) {
+                var newKey=key+"."+ subkey;
+                var c = {};
+                c["id"] = i.toString();
+                c["label"] = newKey;
+                colonne.push(c);
+                i++;
+              }
+            }
+            else {
+              var c = {};
+              c["id"] = i.toString();
+              c["label"] = key;
+              colonne.push(c);
+              i++;
+            }
+
           }
           console.log(colonne);
           this.state.checkboxes = colonne;
@@ -87,7 +101,7 @@ export default class extends Component {
         // instead of a catch() block so that we don't swallow
         // exceptions from actual bugs in components.
         (error) => {
-          
+
         }
       )
 
@@ -104,8 +118,10 @@ export default class extends Component {
       link: param,
     });
   }
-  
-  nextPage = () => {
+
+
+
+  /*nextPage = () => {
     var param = "";
     for (var key in this.state.checkboxIdToSelectedMap){
       if(this.state.checkboxIdToSelectedMap[key] == true)
@@ -114,20 +130,23 @@ export default class extends Component {
     this.state.link = param;
     console.log(this.state.checkboxIdToSelectedMap);
     //this.props.column = this.state.checkboxIdToSelectedMap;
-  }
+  }*/
 
   render() {
     const { selectedOptions } = this.state;
     return (
+
       <Fragment>
+
+        <EuiSpacer size="l" />
         <EuiSelect
           options={this.indices}
-          value={this.state.value}
+          defaultValue={this.indices[0].value}
           onChange={this.onChangeSelect}
         />
 
         <EuiSpacer size="l" />
-        
+
 
        <EuiCheckboxGroup
           options={this.state.checkboxes}
@@ -140,10 +159,13 @@ export default class extends Component {
         <EuiButton href={"#/index/" + this.state.value +"/"+ this.state.link}>
           Next
         </EuiButton>
-      
-    </Fragment> 
-        
-     
+
+        <EuiSpacer size="l" />
+
+
+    </Fragment>
+
+
     );
   }
 }

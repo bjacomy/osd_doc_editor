@@ -54,14 +54,49 @@ export default function (server) {
     }
   });
 
-  //GET mapping 
+  //GET /transactions/_search?q=type:sale
   server.route({
-        path: '/api/label/{index}/_mapping/sales',
+    // We can use path variables in here, that can be accessed on the request
+    // object in the handler.
+    //path: '/api/label/index/{name}',
+    path: '/api/label/{name}/_search',
+    method: 'POST',
+    handler(req, reply) {
+       call(req, 'search', {
+           index: req.params.name,
+           body: req.payload
+       }).then(function (response) {
+             reply(response);
+       });
+    }
+  });
+
+  /*server.route({
+    // We can use path variables in here, that can be accessed on the request
+    // object in the handler.
+    //path: '/api/label/index/{name}',
+    path: '/api/label/{name}/_search',
+    method: 'POST',
+    handler(req, reply) {
+       call(req, 'search', {
+          index: req.params.name,
+          scroll: '1m',
+          body: req.payload
+       }).then(function (response) {
+             reply(response);
+       });
+    }
+  });*/
+
+
+  //GET mapping
+  server.route({
+        path: '/api/label/{index}/_mapping',
         method: 'GET',
         handler(req, reply) {
             call(req, 'indices.getMapping', {
                 index: req.params.index,
-                
+                type: req.params.type,
             })
             .then(function (err, response) {
                 if(err)
@@ -74,12 +109,12 @@ export default function (server) {
 
   //PUT mapping
   server.route({
-        path: '/api/label/{index}/_mapping/sales',
+        path: '/api/label/{index}/_mapping/{type}',
         method: 'PUT',
         handler(req, reply) {
             call(req, 'indices.putMapping', {
                 index: req.params.index,
-                type: "sales",
+                type: req.params.type,
                 body: req.payload
             })
             .then(function (err, response) {
@@ -91,7 +126,7 @@ export default function (server) {
         }
     });
 
-  //Add label value 
+  //Add label value
   server.route({
         path: '/api/label/{index}/{type}/{id}/_update',
         method: 'POST',

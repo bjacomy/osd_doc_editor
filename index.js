@@ -14,7 +14,7 @@ export default function (kibana) {
         // The require reference to the JavaScript file for this app
         main: 'plugins/label/app',
         // The require reference to the icon of the app
-        icon: 'plugins/label/icon.svg'
+        icon: 'plugins/label/news.png'
       }
     },
 

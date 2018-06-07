@@ -146,4 +146,23 @@ export default function (server) {
         }
     });
 
+    //Add label value update by query
+    server.route({
+          path: '/api/label/{index}/_update_by_query',
+          method: 'POST',
+          handler(req, reply) {
+              call(req, 'updateByQuery', {
+                  index: req.params.index,
+                  body: req.payload,
+                  conflicts:'proceed'
+              })
+              .then(function (err, response) {
+                  if(err)
+                      reply(err);
+                  else
+                      reply(response);
+              });
+          }
+      });
+
 };

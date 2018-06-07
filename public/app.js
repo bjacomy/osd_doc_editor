@@ -11,7 +11,7 @@ import ReactDOM from 'react-dom';
 import MyTabs from './components/mytabs.js';
 import Details from './components/indexDetails.js';
 import IndexList from './components/indexList.js';
-import SearchTest from './components/search.js';
+
 
 
 
@@ -66,12 +66,13 @@ uiModules
   this.col = $routeParams.col;
   $scope.index = this.index;
   var total = 0;
-  var body = {};var query = {};
+  var body = {};var query = {};var sort = [];
+  sort.push({"_id" : "asc"});
+  body["sort"] = sort;
   query["match_all"] = {};
   body["query"] = query;
   body["size"] = 10;
   $http.post(`../api/label/${this.index}/_search`,body).then((response) => {
-    //console.log(response);
     this.status = response.data;
     $http.get(`../api/label/${this.index}/_mapping`).then((response) => {
       this.mapping = response.data;
@@ -98,7 +99,6 @@ uiModules
             }
           }
           else {
-            //if((v >= 0 && v <= 49) || (v < 2900 && v >= 2830)){
               if(this.status.hits.hits[v]._source[key])
               {
                 this.status.hits.hits[v][key]=this.status.hits.hits[v]._source[key];
@@ -106,9 +106,6 @@ uiModules
               else {
                 this.status.hits.hits[v][key]="";
               }
-          //  }else{
-            //  this.status.hits.hits[v] = null;
-            //}
           }
 
         }
@@ -139,10 +136,12 @@ uiModules
         for (var v in $scope.data[0]){
           if(! v.startsWith("_")){
             if(! v.startsWith("$")){
-            valeurColonne.push(v);
-            if(v["type"] == "text"){
-            rechercheColonne.push(v);
-            }
+              if ( ! v.startsWith("sort")) {
+                valeurColonne.push(v);
+                if(v["type"] == "text"){
+                  rechercheColonne.push(v);
+                }
+              }
             }
           }
         }
@@ -172,14 +171,5 @@ function display_UI(tabNames, col, rechercheC, total) {
     );
 
 };
-
-function displaySearch_UI() {
-
-    ReactDOM.render(
-      <SearchTest/>,
-      document.getElementById("react_search")
-    );
-
-}
 
 })

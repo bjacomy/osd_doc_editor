@@ -43,6 +43,8 @@ import {
   EuiText,
   EuiTextColor,
   EuiTitle,
+  EuiPortal,
+  EuiBottomBar,
 } from '@elastic/eui';
 
 import {
@@ -67,7 +69,7 @@ export default class extends Component {
     this.state = {
       itemIdToSelectedMap: {},
       itemIdToOpenActionsPopoverMap: {},
-      sortedColumn: 'title',
+      sortedColumn: 'amount',
       itemsPerPage: 10,
       searchValue:'',
       index: this.props.names,
@@ -81,6 +83,10 @@ export default class extends Component {
       allItems:[],
       value: '',
       typeValue: '',
+      isPortalVisible: false,
+      checkAllDoc:false,
+      allSelected:false,
+      anyRowsSelected:true,
     };
 
     this.items =  this.props.names;
@@ -88,16 +94,16 @@ export default class extends Component {
     this.searchTab = this.props.recherche;
     this.total = this.props.total;
     this.sortableProperties = new SortableProperties([{
-      name: 'title',
-      getValue: item => item._id.toLowerCase(),
+      name: 'amount',
+      getValue: item => item.amount.toLowerCase(),
       isAscending: true,
     }, {
-      name: 'dateCreated',
-      getValue: item => item._index.toLowerCase(),
+      name: 'nombre',
+      getValue: item => item.nombre.toLowerCase(),
       isAscending: true,
     }, {
-      name: 'magnitude',
-      getValue: item => item._type.toLowerCase(),
+      name: 'type',
+      getValue: item => item.type.toLowerCase(),
       isAscending: true,
     }], this.state.sortedColumn);
 
@@ -115,6 +121,9 @@ export default class extends Component {
     this.showModalValue = this.showModalValue.bind(this);
     this.columnList = this.columnList.bind(this);
     this.mySearch = this.mySearch.bind(this);
+    this.togglePortal = this.togglePortal.bind(this);
+    this.areAllItemsSelected = this.areAllItemsSelected.bind(this);
+    this.toggleItem = this.toggleItem.bind(this);
     var self = this.state.items;
   }
 
@@ -133,18 +142,46 @@ export default class extends Component {
     });
   }
 
+  togglePortal(allSelected,selectedI) {
+    console.log(this.state.itemIdToSelectedMap);
+    if(allSelected){
+      this.setState({ isPortalVisible: false,
+      anyRowsSelected:true});
+    }
+    else{
+      if(! this.areAnyRowsSelected()){
+        isPortalVisible: false
+      }else {
+        var isAllTrue = !this.state.itemIdToSelectedMap[selectedI];
+
+        for (var item in this.state.itemIdToSelectedMap) {
+          if (item === selectedI) continue;
+          isAllTrue &= this.state.itemIdToSelectedMap[item];
+        }
+
+        this.setState({
+          isPortalVisible: isAllTrue,
+          anyRowsSelected:true
+        });
+      }
+
+    }
+  }
+
+  checkAllDocs = () => {
+      this.setState({ checkAllDoc: !this.state.checkAllDoc});
+  }
+
   onChangeSelect = e => {
     this.setState({
       value: e.target.value,
     });
-    console.log(e.target.value);
   }
 
   onChangeSelectType = e => {
     this.setState({
       typeValue: e.target.value,
     });
-    console.log(e.target.value);
   }
 
   GetMapping= () => {
@@ -174,10 +211,10 @@ export default class extends Component {
       .then(
         (result) => {
           let col = {
-          id: this.state.inputLabel,
-          label: this.state.inputLabel,
-          alignment: LEFT_ALIGNMENT,
-          isSortable: true,
+            id: this.state.inputLabel,
+            label: this.state.inputLabel,
+            alignment: LEFT_ALIGNMENT,
+            isSortable: true,
           };
           this.state.columns.splice(this.state.columns.length - 1, 0, col);
 
@@ -195,17 +232,53 @@ export default class extends Component {
   }
 
   addValueLabel= () => {
-    let secondBody = {};
-    secondBody[this.state.value] = this.state.inputValue;
-    let body = {
-      "doc": secondBody
-    };
-
     let index = this.state.items[0]._index;
     let type = this.state.items[0]._type;
-    for (var property1 in this.state.itemIdToSelectedMap) {
-      if(this.state.itemIdToSelectedMap[property1]){
-      fetch("../api/label/"+index+"/"+type+"/"+property1+"/_update", {
+    if (this.state.checkAllDoc == false) {
+      let secondBody = {};
+      secondBody[this.state.value] = this.state.inputValue;
+      let body = {
+        "doc": secondBody
+      };
+      for (var property1 in this.state.itemIdToSelectedMap) {
+        if(this.state.itemIdToSelectedMap[property1]){
+        fetch("../api/label/"+index+"/"+type+"/"+property1+"/_update", {
+            method: 'post',
+            headers: {
+              'Content-Type': 'application/json',
+              'kbn-xsrf': 'reporting'
+            },
+            body: JSON.stringify(body)
+          })
+          .then(res => res.json())
+          .then(
+            (result) => {
+              var exempleTimeout = setTimeout(this.refreshItems, 1000);
+            },
+            (error) => {
+
+            }
+        )
+        }
+      }
+    }
+    else {
+      let script = {};
+      let query = {};
+      let query_string = {};
+      let body = {};
+      if(this.state.searchValue !='')
+      { query_string["query"] = this.state.searchValue;
+        query["query_string"] = query_string;
+      }else{
+        query["match_all"] = {}
+      }
+      script["source"] = "ctx._source."+this.state.value+" = '"+this.state.inputValue+"'";
+      script["lang"] = "painless";
+      body["script"] = script;
+      body["query"] = query;
+
+      fetch("../api/label/"+index+"/_update_by_query", {
           method: 'post',
           headers: {
             'Content-Type': 'application/json',
@@ -216,31 +289,56 @@ export default class extends Component {
         .then(res => res.json())
         .then(
           (result) => {
-
+            var exempleTimeout = setTimeout(this.refreshItems, 1000);
           },
           (error) => {
 
           }
       )
-      }
     }
-    var exempleTimeout = setTimeout(this.refreshItems, 1000);
+    this.setState({ isPortalVisible: false,
+                    checkAllDoc: false, });
     this.closeModalValue();
   }
 
   refreshItems= () => {
     let index = this.state.items[0]._index;
     let type = this.state.items[0]._type;
-    fetch("../api/label/search/"+index, {
-        method: 'get',
+    var body = {};var query = {};var sort = [];
+    if((this.pager.currentPageIndex+1) * this.state.itemsPerPage < 10000)
+    {sort.push({"_id" : "asc"});
+    body["from"] = this.pager.currentPageIndex * this.state.itemsPerPage ;}
+    else
+    {sort.push({"_id" : "desc"});
+      if((this.pager.currentPageIndex+1) == this.pager.totalPages)
+      body["from"] = (this.pager.totalPages - (this.pager.currentPageIndex + 1)) * this.state.itemsPerPage ;
+      else
+      body["from"] = (this.pager.totalItems) % (this.pager.currentPageIndex+1);
+    }
+    body["sort"] = sort;
+    query["match_all"] = {};
+    body["query"] = query;
+    body["size"] = this.state.itemsPerPage;
+    if(this.state.searchValue != '') {
+      var multi_match = {};
+      var query = {};
+      multi_match["query"] = this.state.searchValue;
+      query["query_string"] = multi_match;
+      body["query"] = query;
+    }
+
+    fetch("../api/label/"+index+"/_search", {
+        method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+          'kbn-xsrf': 'reporting'
+        },
+        body: JSON.stringify(body)
       })
       .then(res => res.json())
       .then(
         (result) => {
-          this.requestMapping(result.hits.total, result.hits.hits, null);
+          this.requestMapping(result.hits.total, result.hits.hits, null, this.state.itemsPerPage);
           this.setState({
             items: result.hits.hits
           })
@@ -253,7 +351,7 @@ export default class extends Component {
       )
   }
 
-  requestMapping= (total, newItems, pageIndex) => {
+  requestMapping= (total, newItems, pageIndex, itemPPage) => {
     let index = this.state.items[0]._index;
     let type = this.state.items[0]._type;
 
@@ -276,12 +374,11 @@ export default class extends Component {
                 }
               }
 
-              this.pager = new Pager(total , this.state.itemsPerPage);
+              this.pager = new Pager(total , itemPPage);
               if(this.pager.totalPages - 1 == pageIndex){
-                console.log("ici");
                 this.setState({
                   items: newItems,
-                  lastItemIndex: (total % 10) - 1,
+                  lastItemIndex: (total % itemPPage) - 1,
                 });
               }else {
                 this.setState({
@@ -290,10 +387,6 @@ export default class extends Component {
                   items: newItems,
                 });
               }
-
-              console.log(this.pager);
-              console.log(this.state.firstItemIndex);
-              console.log(this.state.lastItemIndex);
               if (pageIndex != null) {
                   this.pager.goToPageIndex(pageIndex);
               }
@@ -326,56 +419,74 @@ export default class extends Component {
 
   showModal() {
     this.setState({ isModalVisible: true });
-
   }
 
   mySearch= (event) => {
-      this.setState({ searchValue: event.target.value });
-      var exempleTimeout = setTimeout(this.Search(event.target.value, 0), 0);
+      this.setState({ searchValue: event.target.value,
+                      anyRowsSelected:false });
+      if(this.areAllItemsSelected())
+      {this.toggleAll();}
+      else if (this.areAnyRowsSelected()) {
+        this.toggleAll();
+        this.setState({ isPortalVisible: false });
+      }
+      var exempleTimeout = setTimeout(this.Search(event.target.value, 0, this.state.itemsPerPage), 0);
   }
 
-  Search = (varS, from) => {
-    console.log(this.columnsProp);
-    console.log(this.searchTab);
+  Search = (varS, from , itemPP) => {
         let index = this.state.items[0]._index;
         let type = this.state.items[0]._type;
-        var body = {};var query = {};
+        var body = {};var query = {};var sort = [];
+        if(from * itemPP < 10000)
+        {sort.push({"_id" : "asc"});
+          body["from"] = from;}
+        else
+        {sort.push({"_id" : "desc"});
+          if((this.pager.currentPageIndex+1) == this.pager.totalPages)
+          body["from"] = (this.pager.totalPages - (this.pager.currentPageIndex + 1)) * this.state.itemsPerPage ;
+          else
+          body["from"] = (this.pager.totalItems) % (this.pager.currentPageIndex+1);
+        }
+        body["sort"] = sort;
         query["match_all"] = {};
         body["query"] = query;
-        body["size"] = 10;
-        body["from"] = from;
+        body["size"] = itemPP;
+
         var fields = this.searchTab;
         if(varS != ''){
           if(varS.indexOf(":") != -1){
               if (varS.lastIndexOf(":") == varS.indexOf(":")) {
                 var multi_match = {};
                 var query = {};
+                body["sort"] = sort;
                 var searchField = varS.split(":");
                 multi_match["default_field"] = searchField[0];
                 multi_match["query"] = searchField[1];
                 query["query_string"] = multi_match;
                 body["query"] = query;
-                body["size"] = 10;
+                body["size"] = itemPP;
                 body["from"] = from;
               }
               else {
                 var multi_match = {};
                 var query = {};
+                body["sort"] = sort;
                 multi_match["query"] = varS;
                 query["query_string"] = multi_match;
                 body["query"] = query;
-                body["size"] = 10;
+                body["size"] = itemPP;
                 body["from"] = from;
               }
           }else{
                 var multi_match = {};
                 var query = {};
+                body["sort"] = sort;
                 multi_match["fields"] = fields;
                 multi_match["query"] = varS;
                 multi_match["type"] = "phrase_prefix";
                 query["multi_match"] = multi_match;
                 body["query"] = query;
-                body["size"] = 10;
+                body["size"] = itemPP;
                 body["from"] = from;
           }
         }
@@ -393,8 +504,7 @@ export default class extends Component {
         (result) => {
 
           if(result.hits.hits.length > 0){
-            console.log("result if length"+ from);
-            this.requestMapping(result.hits.total, result.hits.hits, from/10 )
+            this.requestMapping(result.hits.total, result.hits.hits, from/itemPP, itemPP )
           }
         },
         (error) => {
@@ -419,7 +529,6 @@ export default class extends Component {
     };
     tab.push(check);
     for (var property1 in this.columnsProp) {
-      console.log(this.columnsProp);
       if(this.columnsProp[property1] != "_source"){
         if(this.columnsProp[property1] != "$$hashKey" ){
           let col = {
@@ -446,8 +555,8 @@ export default class extends Component {
       let select = {
           text: this.columnsProp[v],
           value: this.columnsProp[v],
-          };
-          selectTab.push(select);
+      };
+      selectTab.push(select);
     }
     this.columnsProp = [];
     this.columnsProp = selectTab;
@@ -456,34 +565,81 @@ export default class extends Component {
   }
 
   onChangeItemsPerPage = itemsPerPage => {
+    var pageIndex = this.pager.currentPageIndex;
     this.pager.setItemsPerPage(itemsPerPage);
-    this.setState({
-      itemsPerPage,
-      firstItemIndex: this.pager.getFirstItemIndex(),
-      lastItemIndex: this.pager.getLastItemIndex(),
-    });
+    if(this.state.searchValue != ''){
+      var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * itemsPerPage, itemsPerPage), 500);
+      this.setState({
+        itemsPerPage,
+      });
+    }else {
+          var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * itemsPerPage, itemsPerPage), 500);
+          this.setState({
+            itemsPerPage,
+          });
+      /*let index = this.state.items[0]._index;
+      let type = this.state.items[0]._type;
+      var body = {};var query = {};var sort = [];
+      if((pageIndex + 1) * itemsPerPage < 10000)
+      {sort.push({"_id" : "asc"});
+      body["from"] = pageIndex * itemsPerPage ;}
+      else
+      {sort.push({"_id" : "desc"});
+        if((pageIndex + 1) == this.pager.totalPages)
+        body["from"] = (this.pager.totalPages - (pageIndex + 1)) * itemsPerPage ;
+        else
+        body["from"] = (this.pager.totalItems) % (pageIndex+1);
+      }
+      body["sort"] = sort;
+      query["match_all"] = {};
+      body["query"] = query;
+      body["size"] = itemsPerPage;
+
+      fetch("../api/label/"+index+"/_search", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'kbn-xsrf': 'reporting'
+          },
+          body: JSON.stringify(body)
+        })
+        .then(res => res.json())
+        .then(
+          (result) => {
+            this.setState({
+              itemsPerPage,
+            });
+            this.requestMapping(result.hits.total, result.hits.hits , pageIndex, itemsPerPage)
+          },
+          (error) => {
+
+          }
+        )*/
+      }
   }
 
   onChangePage = pageIndex => {
-    /*this.pager.goToPageIndex(pageIndex);
-    this.setState({
-      firstItemIndex: this.pager.getFirstItemIndex(),
-      lastItemIndex: this.pager.getLastItemIndex(),
-    });
-    console.log(this.pager.getCurrentPageIndex());
-    console.log(this.pager.getTotalPages());
-    console.log(this.pager);*/
-//console.log(pageIndex);
   if(this.state.searchValue != ''){
-    var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * 10), 500);
+    var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * this.state.itemsPerPage, this.state.itemsPerPage), 500);
   }else {
-    let index = this.state.items[0]._index;
+    var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * this.state.itemsPerPage, this.state.itemsPerPage), 500);
+    /*let index = this.state.items[0]._index;
     let type = this.state.items[0]._type;
-    var body = {};var query = {};
+    var body = {};var query = {};var sort = [];
+    if((pageIndex+1) * this.state.itemsPerPage < 10000)
+    {sort.push({"_id" : "asc"});
+    body["from"] = pageIndex * this.state.itemsPerPage ;}
+    else
+    {sort.push({"_id" : "desc"});
+      if((pageIndex+1) == this.pager.totalPages)
+      body["from"] = (this.pager.totalPages - (pageIndex + 1)) * this.state.itemsPerPage ;
+      else
+      body["from"] = (this.pager.totalItems) % (pageIndex+1);
+    }
+    body["sort"] = sort;
     query["match_all"] = {};
     body["query"] = query;
-    body["from"] = pageIndex * 10 ;
-    body["size"] = 10;
+    body["size"] = this.state.itemsPerPage;
 
     fetch("../api/label/"+index+"/_search", {
         method: 'POST',
@@ -496,24 +652,17 @@ export default class extends Component {
       .then(res => res.json())
       .then(
         (result) => {
-          console.log(result);
-          //console.log(this.state.items);
-          console.log(pageIndex);
-          //this.searchAll(result.hits.total);
-          this.requestMapping(result.hits.total, result.hits.hits , pageIndex)
+          this.requestMapping(result.hits.total, result.hits.hits , pageIndex, this.state.itemsPerPage)
         },
         (error) => {
-
         }
-      )
+      )*/
     }
-
   };
 
 
   onSort = prop => {
     this.sortableProperties.sortOn(prop);
-
     this.setState({
       sortedColumn: prop,
     });
@@ -529,18 +678,27 @@ export default class extends Component {
         itemIdToSelectedMap: newItemIdToSelectedMap,
       };
     });
+
+    var allSelected = this.areAllItemsSelected();
+    this.togglePortal(allSelected,itemId);
+
   }
 
   toggleAll = () => {
     const allSelected = this.areAllItemsSelected();
     const newItemIdToSelectedMap = {};
-    //this.searchAll(this.total)
     this.state.items.forEach(item => newItemIdToSelectedMap[item._id] = !allSelected);
 
     this.setState({
       itemIdToSelectedMap: newItemIdToSelectedMap,
     });
-    console.log(this.state.itemIdToSelectedMap);
+
+    if(allSelected)
+    { this.setState({ isPortalVisible: false,
+                      checkAllDoc: false});
+    }else {
+      this.setState({ isPortalVisible: true});
+    }
   }
 
   isItemSelected = itemId => {
@@ -611,11 +769,15 @@ export default class extends Component {
           key={column.id}
           align={this.state.columns[columnIndex].alignment}
           width={column.width}
-          onSort={column.isSortable ? this.onSort.bind(this, column.id) : undefined}
-          isSorted={this.state.sortedColumn === column.id}
-          isSortAscending={this.sortableProperties.isAscendingByName(column.id)}
+          //color= "primary"
+          //onSort={column.isSortable ? this.onSort.bind(this, column.id) : undefined}
+          //isSorted={this.state.sortedColumn === column.id}
+          //isSortAscending={this.sortableProperties.isAscendingByName(column.id)}
         >
+        <EuiLink color="primary" >
           {column.label}
+        </EuiLink>
+
         </EuiTableHeaderCell>
       );
     });
@@ -651,19 +813,13 @@ export default class extends Component {
                     </span>    {val}
 
                 </p>
-
               );
-
-              //console.log(k)
             }
-
-
             );
 
-
-
         if (column.isCheckbox) {
-          return (
+          if(this.state.checkAllDoc == false)
+          {return (
             <EuiTableRowCellCheckbox key={column.id}>
               <EuiCheckbox
                 id={`${item._id}-checkbox`}
@@ -672,7 +828,19 @@ export default class extends Component {
                 type="inList"
               />
             </EuiTableRowCellCheckbox>
-          );
+          );}
+          else {
+            return (
+              <EuiTableRowCellCheckbox key={column.id}>
+                <EuiCheckbox
+                  id={`${item._id}-checkbox`}
+                  checked={true}
+                  onChange={this.toggleItem.bind(this, item._id)}
+                  type="inList"
+                />
+              </EuiTableRowCellCheckbox>
+            );
+          }
         }
 
         if (column.isActionsPopover) {
@@ -757,17 +925,51 @@ export default class extends Component {
   }
 
   render() {
+    let portal;
+
+    if (this.state.isPortalVisible == true && this.state.checkAllDoc == false) {
+      portal = (
+        <EuiPortal>
+          <EuiBottomBar>
+          <p align="center">
+            The documents on this page are selected. {(
+              <EuiLink
+                onClick={this.checkAllDocs}
+              >
+                Select all documents?
+              </EuiLink>
+            )}
+          </p>
+          </EuiBottomBar>
+        </EuiPortal>
+      );
+    }
+    if (this.state.isPortalVisible == true && this.state.checkAllDoc == true)  {
+      portal = (
+        <EuiPortal>
+          <EuiBottomBar>
+          <p align="center">
+            All documents are selected. {(
+              <EuiLink
+                onClick={this.checkAllDocs}
+              >
+                cancel the selection?
+              </EuiLink>
+            )}
+          </p>
+          </EuiBottomBar>
+        </EuiPortal>
+      );
+    }
+
     let optionalActionButtons;
     const formSampleValue = (
       <EuiForm>
-
         <EuiFormRow
           label="Label Value"
         >
           <EuiFieldText name="popValue" onChange={this.handleValue.bind(this)}/>
         </EuiFormRow>
-
-
       </EuiForm>
     );
 
@@ -822,7 +1024,7 @@ export default class extends Component {
       );
     }
 
-    if (this.areAnyRowsSelected() > 0) {
+    if (this.areAnyRowsSelected() && this.state.anyRowsSelected) {
       optionalActionButtons = (
         <EuiFlexItem grow={false}>
           <EuiButton color="danger" /*onClick={this.addValueLabel}*/ onClick={this.showModalValue} >Label value</EuiButton>
@@ -833,8 +1035,6 @@ export default class extends Component {
 
     const formSample = (
       <EuiForm>
-
-
         <EuiFormRow
           label="Label"
         >
@@ -842,7 +1042,6 @@ export default class extends Component {
         </EuiFormRow>
       </EuiForm>
     );
-
 
     let modal;
 
@@ -894,8 +1093,6 @@ export default class extends Component {
       );
     }
 
-
-
     return (
       <div>
         <EuiFlexGroup gutterSize="m">
@@ -936,6 +1133,8 @@ export default class extends Component {
           onChangeItemsPerPage={this.onChangeItemsPerPage}
           onChangePage={this.onChangePage}
         />
+        <br/><br/><br/><br/>
+        {portal}
       </div>
     );
   }

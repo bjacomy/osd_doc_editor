@@ -8,7 +8,6 @@ import overviewTemplate from './templates/index.html';
 import detailTemplate from './templates/detail.html';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import MyTabs from './components/mytabs.js';
 import Details from './components/indexDetails.js';
 import IndexList from './components/indexList.js';
 

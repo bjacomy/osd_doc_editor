@@ -1,6 +1,6 @@
 {
   "name": "labeling-plugin",
-  "version": "6.2.2",
+  "version": "6.2.2-2",
   "description": "An awesome Kibana plugin that create label for elasticsearch indices",
   "main": "index.js",
   "kibana": {

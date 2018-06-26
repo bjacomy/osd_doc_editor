@@ -29,10 +29,13 @@
   },
   "dependencies": {
     "@elastic/eui": "0.0.42",
+    "@fortawesome/fontawesome": "^1.1.8",
+    "@fortawesome/fontawesome-free-solid": "^5.0.13",
     "fixed-data-table-2": "^0.8.12",
     "moment": "^2.22.1",
     "react": "^16.3.2",
     "react-collapsible": "^2.1.0",
-    "react-dom": "^16.3.2"
+    "react-dom": "^16.3.2",
+    "react-fontawesome": "^1.6.1"
   }
 }

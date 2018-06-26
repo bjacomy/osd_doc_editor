@@ -2,7 +2,7 @@ import React, {
   Component,
   Fragment,
 } from 'react';
-
+import FontAwesome from 'react-fontawesome';
 import {
   EuiBadge,
   EuiHealth,
@@ -45,9 +45,12 @@ import {
   EuiTitle,
   EuiPortal,
   EuiBottomBar,
-} from '@elastic/eui';
-
-import {
+  EuiHeader,
+  EuiHeaderBreadcrumbs,
+  EuiHeaderSection,
+  EuiHeaderSectionItem,
+  EuiHeaderSectionItemButton,
+  EuiHeaderLogo,
   makeId,
   LEFT_ALIGNMENT,
   RIGHT_ALIGNMENT,
@@ -59,33 +62,19 @@ export default class extends Component {
   constructor(props) {
     super(props);
 
-    this.columnsType = [
-      { value: 'choose type', text: 'choose type' , "disabled" : true },
-      { value: 'text', text: 'text' },
-      { value: 'double', text: 'double' },
-      { value: 'boolean', text: 'boolean' },
-    ];
-
     this.state = {
       itemIdToSelectedMap: {},
       itemIdToOpenActionsPopoverMap: {},
-      sortedColumn: 'amount',
       itemsPerPage: 10,
       searchValue:'',
-      index: this.props.names,
-      isModalVisible: false,
       isModalValueVisible: false,
-      isSwitchChecked: true,
       inputValue: '',
       inputLabel: '',
       columns:[],
       items: this.props.names,
-      allItems:[],
       value: '',
-      typeValue: '',
       isPortalVisible: false,
       checkAllDoc:false,
-      allSelected:false,
       anyRowsSelected:true,
     };
 
@@ -93,38 +82,18 @@ export default class extends Component {
     this.columnsProp = this.props.colonne;
     this.searchTab = this.props.recherche;
     this.total = this.props.total;
-    this.sortableProperties = new SortableProperties([{
-      name: 'amount',
-      getValue: item => item.amount.toLowerCase(),
-      isAscending: true,
-    }, {
-      name: 'nombre',
-      getValue: item => item.nombre.toLowerCase(),
-      isAscending: true,
-    }, {
-      name: 'type',
-      getValue: item => item.type.toLowerCase(),
-      isAscending: true,
-    }], this.state.sortedColumn);
-
-
     this.state.columns =this.columnList();
 
     this.pager = new Pager(this.total, this.state.itemsPerPage);
     this.state.firstItemIndex = this.pager.getFirstItemIndex();
     this.state.lastItemIndex = this.pager.getLastItemIndex();
-
-    console.log(this.state.items);
-    this.closeModal = this.closeModal.bind(this);
     this.closeModalValue = this.closeModalValue.bind(this);
-    this.showModal = this.showModal.bind(this);
     this.showModalValue = this.showModalValue.bind(this);
     this.columnList = this.columnList.bind(this);
     this.mySearch = this.mySearch.bind(this);
     this.togglePortal = this.togglePortal.bind(this);
     this.areAllItemsSelected = this.areAllItemsSelected.bind(this);
     this.toggleItem = this.toggleItem.bind(this);
-    var self = this.state.items;
   }
 
   componentDidMount() {
@@ -134,37 +103,41 @@ export default class extends Component {
                 return { unseen: "does not display" }
             });
         }, 1000);
-    }
-
-  onSwitchChange = () => {
-    this.setState({
-      isSwitchChecked: !this.state.isSwitchChecked,
-    });
   }
 
   togglePortal(allSelected,selectedI) {
-    console.log(this.state.itemIdToSelectedMap);
     if(allSelected){
       this.setState({ isPortalVisible: false,
-      anyRowsSelected:true});
+      anyRowsSelected: true,
+    });
     }
     else{
       if(! this.areAnyRowsSelected()){
-        isPortalVisible: false
+        this.setState({
+          isPortalVisible: false,
+        });
       }else {
         var isAllTrue = !this.state.itemIdToSelectedMap[selectedI];
-
+        var isAllTrueIt = true;
         for (var item in this.state.itemIdToSelectedMap) {
           if (item === selectedI) continue;
-          isAllTrue &= this.state.itemIdToSelectedMap[item];
+          isAllTrue = isAllTrue && this.state.itemIdToSelectedMap[item];
         }
-
+        for (var it in this.state.items) {
+          var existe = false;
+          for (var item in this.state.itemIdToSelectedMap) {
+            if (this.state.items[it]._id === selectedI) { existe = true;}
+            else {
+              if(this.state.items[it]._id === item){ existe = true;}
+            }
+          }
+          isAllTrueIt = isAllTrueIt && existe;
+        }
         this.setState({
-          isPortalVisible: isAllTrue,
+          isPortalVisible: isAllTrue && ((Object.keys(this.state.itemIdToSelectedMap).length) >= this.state.lastItemIndex) && isAllTrueIt == true,
           anyRowsSelected:true
         });
       }
-
     }
   }
 
@@ -176,59 +149,6 @@ export default class extends Component {
     this.setState({
       value: e.target.value,
     });
-  }
-
-  onChangeSelectType = e => {
-    this.setState({
-      typeValue: e.target.value,
-    });
-  }
-
-  GetMapping= () => {
-    var mapReq = {};
-    var type = {};
-    type["type"] = this.state.typeValue;
-    var property = {};
-    property[this.state.inputLabel] = type;
-    mapReq["properties"] = property;
-    return mapReq;
-  }
-
-
-  saveLabel= () => {
-    let body = this.GetMapping();
-    let index = this.state.items[0]._index;
-    let type = this.state.items[0]._type;
-    fetch("../api/label/"+index+"/_mapping/"+type, {
-        method: 'put',
-        headers: {
-          'Content-Type': 'application/json',
-          'kbn-xsrf': 'reporting'
-        },
-        body:JSON.stringify(body)
-      })
-      .then(res => res.json())
-      .then(
-        (result) => {
-          let col = {
-            id: this.state.inputLabel,
-            label: this.state.inputLabel,
-            alignment: LEFT_ALIGNMENT,
-            isSortable: true,
-          };
-          this.state.columns.splice(this.state.columns.length - 1, 0, col);
-
-          let select = {
-              text: this.state.inputLabel,
-              value: this.state.inputLabel,
-              };
-              this.columnsProp.push(select);
-        },
-        (error) => {
-
-        }
-      )
-      this.closeModal();
   }
 
   addValueLabel= () => {
@@ -253,7 +173,7 @@ export default class extends Component {
           .then(res => res.json())
           .then(
             (result) => {
-              var exempleTimeout = setTimeout(this.refreshItems, 1000);
+              setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
             },
             (error) => {
 
@@ -262,7 +182,45 @@ export default class extends Component {
         }
       }
     }
-    else {
+    if (this.state.checkAllDoc == true && this .state.isPortalVisible == false) {
+        let script = {};
+        let query = {};
+        let query_string = {};
+        let body = {};
+        if(this.state.searchValue !='')
+        { query_string["query"] = this.state.searchValue;
+          for (var property1 in this.state.itemIdToSelectedMap) {
+            if(! this.state.itemIdToSelectedMap[property1]){
+              query_string["query"] += " NOT _id:"+property1
+            }
+          }
+          query["query_string"] = query_string;
+        }else{
+          query["match_all"] = {}
+        }
+        script["source"] = "ctx._source."+this.state.value+" = '"+this.state.inputValue+"'";
+        script["lang"] = "painless";
+        body["script"] = script;
+        body["query"] = query;
+        console.log(body);
+        fetch("../api/label/"+index+"/_update_by_query", {
+            method: 'post',
+            headers: {
+              'Content-Type': 'application/json',
+              'kbn-xsrf': 'reporting'
+            },
+            body: JSON.stringify(body)
+          })
+          .then(res => res.json())
+          .then(
+            (result) => {
+                setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);          },
+            (error) => {
+
+            }
+        )
+    }
+    if (this.state.checkAllDoc == true && this .state.isPortalVisible == true) {
       let script = {};
       let query = {};
       let query_string = {};
@@ -289,66 +247,13 @@ export default class extends Component {
         .then(res => res.json())
         .then(
           (result) => {
-            var exempleTimeout = setTimeout(this.refreshItems, 1000);
-          },
+              setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);          },
           (error) => {
 
           }
       )
     }
-    this.setState({ isPortalVisible: false,
-                    checkAllDoc: false, });
     this.closeModalValue();
-  }
-
-  refreshItems= () => {
-    let index = this.state.items[0]._index;
-    let type = this.state.items[0]._type;
-    var body = {};var query = {};var sort = [];
-    if((this.pager.currentPageIndex+1) * this.state.itemsPerPage < 10000)
-    {sort.push({"_id" : "asc"});
-    body["from"] = this.pager.currentPageIndex * this.state.itemsPerPage ;}
-    else
-    {sort.push({"_id" : "desc"});
-      if((this.pager.currentPageIndex+1) == this.pager.totalPages)
-      body["from"] = (this.pager.totalPages - (this.pager.currentPageIndex + 1)) * this.state.itemsPerPage ;
-      else
-      body["from"] = (this.pager.totalItems) % (this.pager.currentPageIndex+1);
-    }
-    body["sort"] = sort;
-    query["match_all"] = {};
-    body["query"] = query;
-    body["size"] = this.state.itemsPerPage;
-    if(this.state.searchValue != '') {
-      var multi_match = {};
-      var query = {};
-      multi_match["query"] = this.state.searchValue;
-      query["query_string"] = multi_match;
-      body["query"] = query;
-    }
-
-    fetch("../api/label/"+index+"/_search", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'kbn-xsrf': 'reporting'
-        },
-        body: JSON.stringify(body)
-      })
-      .then(res => res.json())
-      .then(
-        (result) => {
-          this.requestMapping(result.hits.total, result.hits.hits, null, this.state.itemsPerPage);
-          this.setState({
-            items: result.hits.hits
-          })
-          console.log(result.hits.hits);
-          return result.hits.hits
-        },
-        (error) => {
-
-        }
-      )
   }
 
   requestMapping= (total, newItems, pageIndex, itemPPage) => {
@@ -397,11 +302,6 @@ export default class extends Component {
           )
   }
 
-  handle(event){
-    this.setState({
-      inputLabel: event.target.value
-    })
-  }
 
   handleValue(event){
     this.setState({
@@ -409,31 +309,32 @@ export default class extends Component {
     })
   }
 
-  closeModal() {
-    this.setState({ isModalVisible: false });
+  mySearchHandle(event){
+    this.setState({
+      searchValue: event.target.value,
+    })
+    if (event.target.value ==='') {
+      this.setState({ itemIdToSelectedMap: {},
+                    isPortalVisible:false
+      });
+      var exempleTimeout = setTimeout(this.Search(event.target.value, 0, this.state.itemsPerPage), 100);
+    }
   }
 
   closeModalValue() {
     this.setState({ isModalValueVisible: false });
   }
 
-  showModal() {
-    this.setState({ isModalVisible: true });
-  }
-
-  mySearch= (event) => {
-      this.setState({ searchValue: event.target.value,
-                      anyRowsSelected:false });
-      if(this.areAllItemsSelected())
-      {this.toggleAll();}
-      else if (this.areAnyRowsSelected()) {
-        this.toggleAll();
-        this.setState({ isPortalVisible: false });
-      }
-      var exempleTimeout = setTimeout(this.Search(event.target.value, 0, this.state.itemsPerPage), 0);
+  mySearch= () => {
+      this.setState({ itemIdToSelectedMap: {},
+                    isPortalVisible:false
+      });
+      var exempleTimeout = setTimeout(this.Search(this.state.searchValue, 0, this.state.itemsPerPage), 100);
   }
 
   Search = (varS, from , itemPP) => {
+    if(this.state.items.length != 0){
+
         let index = this.state.items[0]._index;
         let type = this.state.items[0]._type;
         var body = {};var query = {};var sort = [];
@@ -504,15 +405,38 @@ export default class extends Component {
         (result) => {
 
           if(result.hits.hits.length > 0){
-            this.requestMapping(result.hits.total, result.hits.hits, from/itemPP, itemPP )
+            this.pager = new Pager(result.hits.total , itemPP);
+            if(this.pager.totalPages - 1 == from/itemPP){
+              this.setState({
+                items: result.hits.hits,
+                lastItemIndex: (result.hits.total % itemPP) - 1,
+              });
+            }else {
+              this.setState({
+                firstItemIndex: this.pager.getFirstItemIndex(),
+                lastItemIndex: this.pager.getLastItemIndex(),
+                items: result.hits.hits,
+              });
+            }
+            if(this.state.checkAllDoc){
+              const allSelected = this.areAllItemsSelected();
+              const newItemIdToSelectedMap = {};
+              this.state.items.forEach(item => newItemIdToSelectedMap[item._id] = !allSelected);
+              //this.state.itemIdToSelectedMap.concat(newItemIdToSelectedMap)
+              this.setState({
+                itemIdToSelectedMap: Object.assign(newItemIdToSelectedMap, this.state.itemIdToSelectedMap),
+              });
+            }
+            this.requestMapping(result.hits.total, result.hits.hits, from/itemPP, itemPP );
+
           }
         },
         (error) => {
 
         }
       )
+    }
   }
-
 
   showModalValue= () => {
     this.setState({ isModalValueVisible: true });
@@ -535,7 +459,6 @@ export default class extends Component {
           id: this.columnsProp[property1],
           label: this.columnsProp[property1],
           alignment: LEFT_ALIGNMENT,
-          isSortable: true,
           };
           tab.push(col);
           }
@@ -567,106 +490,16 @@ export default class extends Component {
   onChangeItemsPerPage = itemsPerPage => {
     var pageIndex = this.pager.currentPageIndex;
     this.pager.setItemsPerPage(itemsPerPage);
-    if(this.state.searchValue != ''){
-      var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * itemsPerPage, itemsPerPage), 500);
-      this.setState({
-        itemsPerPage,
-      });
-    }else {
-          var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * itemsPerPage, itemsPerPage), 500);
-          this.setState({
-            itemsPerPage,
-          });
-      /*let index = this.state.items[0]._index;
-      let type = this.state.items[0]._type;
-      var body = {};var query = {};var sort = [];
-      if((pageIndex + 1) * itemsPerPage < 10000)
-      {sort.push({"_id" : "asc"});
-      body["from"] = pageIndex * itemsPerPage ;}
-      else
-      {sort.push({"_id" : "desc"});
-        if((pageIndex + 1) == this.pager.totalPages)
-        body["from"] = (this.pager.totalPages - (pageIndex + 1)) * itemsPerPage ;
-        else
-        body["from"] = (this.pager.totalItems) % (pageIndex+1);
-      }
-      body["sort"] = sort;
-      query["match_all"] = {};
-      body["query"] = query;
-      body["size"] = itemsPerPage;
+    var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * itemsPerPage, itemsPerPage), 500);
+    this.setState({
+      itemsPerPage,
+    });
 
-      fetch("../api/label/"+index+"/_search", {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'kbn-xsrf': 'reporting'
-          },
-          body: JSON.stringify(body)
-        })
-        .then(res => res.json())
-        .then(
-          (result) => {
-            this.setState({
-              itemsPerPage,
-            });
-            this.requestMapping(result.hits.total, result.hits.hits , pageIndex, itemsPerPage)
-          },
-          (error) => {
-
-          }
-        )*/
-      }
   }
 
   onChangePage = pageIndex => {
-  if(this.state.searchValue != ''){
     var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * this.state.itemsPerPage, this.state.itemsPerPage), 500);
-  }else {
-    var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * this.state.itemsPerPage, this.state.itemsPerPage), 500);
-    /*let index = this.state.items[0]._index;
-    let type = this.state.items[0]._type;
-    var body = {};var query = {};var sort = [];
-    if((pageIndex+1) * this.state.itemsPerPage < 10000)
-    {sort.push({"_id" : "asc"});
-    body["from"] = pageIndex * this.state.itemsPerPage ;}
-    else
-    {sort.push({"_id" : "desc"});
-      if((pageIndex+1) == this.pager.totalPages)
-      body["from"] = (this.pager.totalPages - (pageIndex + 1)) * this.state.itemsPerPage ;
-      else
-      body["from"] = (this.pager.totalItems) % (pageIndex+1);
-    }
-    body["sort"] = sort;
-    query["match_all"] = {};
-    body["query"] = query;
-    body["size"] = this.state.itemsPerPage;
-
-    fetch("../api/label/"+index+"/_search", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'kbn-xsrf': 'reporting'
-        },
-        body: JSON.stringify(body)
-      })
-      .then(res => res.json())
-      .then(
-        (result) => {
-          this.requestMapping(result.hits.total, result.hits.hits , pageIndex, this.state.itemsPerPage)
-        },
-        (error) => {
-        }
-      )*/
-    }
   };
-
-
-  onSort = prop => {
-    this.sortableProperties.sortOn(prop);
-    this.setState({
-      sortedColumn: prop,
-    });
-  }
 
   toggleItem = itemId => {
     this.setState(previousState => {
@@ -769,21 +602,16 @@ export default class extends Component {
           key={column.id}
           align={this.state.columns[columnIndex].alignment}
           width={column.width}
-          //color= "primary"
-          //onSort={column.isSortable ? this.onSort.bind(this, column.id) : undefined}
-          //isSorted={this.state.sortedColumn === column.id}
-          //isSortAscending={this.sortableProperties.isAscendingByName(column.id)}
+          style={{ color: '#025471'}}
         >
-        <EuiLink color="primary" >
           {column.label}
-        </EuiLink>
-
         </EuiTableHeaderCell>
       );
     });
   }
 
   renderRows() {
+    if(this.state.items.length != 0){
     const renderRow = item => {
       const cells = this.state.columns.map(column => {
         const cell = item[column.id];
@@ -792,29 +620,26 @@ export default class extends Component {
         let popkey;
         let act = "";
         let child;
-        //const popover = this.state.items.map(i => {
+
             poptab = Object.values(item);
             popkey = Object.keys(item);
-
 
             const keyValue = popkey.map(k => {
               if(k != "_source")
               { key = k + ":";
-                val = item[k];}
-              else {
-                key = null;
-                val = null;
-              }
+                val = item[k];
+
               return (
-                <p key={key}> <span style={{ background: '#D9D9D9' }}>
+                <div key={key}> <span style={{ background: '#D9D9D9' }}>
                       <EuiTextColor>
                         {key}
                       </EuiTextColor>
                     </span>    {val}
+                    <EuiSpacer size="s" />
+                </div>
 
-                </p>
               );
-            }
+            }}
             );
 
         if (column.isCheckbox) {
@@ -830,16 +655,27 @@ export default class extends Component {
             </EuiTableRowCellCheckbox>
           );}
           else {
-            return (
+            if(this.state.isPortalVisible)
+              {return (
+                <EuiTableRowCellCheckbox key={column.id}>
+                  <EuiCheckbox
+                    id={`${item._id}-checkbox`}
+                    checked={true}
+                    onChange={this.toggleItem.bind(this, item._id)}
+                    type="inList"
+                  />
+                </EuiTableRowCellCheckbox>
+              );}
+            else {return (
               <EuiTableRowCellCheckbox key={column.id}>
                 <EuiCheckbox
                   id={`${item._id}-checkbox`}
-                  checked={true}
+                  checked={this.state.itemIdToSelectedMap[item._id]}
                   onChange={this.toggleItem.bind(this, item._id)}
                   type="inList"
                 />
               </EuiTableRowCellCheckbox>
-            );
+            );}
           }
         }
 
@@ -855,9 +691,8 @@ export default class extends Component {
                 button={(
                   <EuiButtonIcon
                     aria-label="Actions"
-                    iconType="gear"
-                    size="s"
-                    color="text"
+                    iconType="iInCircle"
+                    style={{ width: '80px',height:'80px'}}
                     onClick={() => this.togglePopover(item._id)}
                   />
                 )}
@@ -868,13 +703,13 @@ export default class extends Component {
 
               >
                 <EuiContextMenuPanel
-                style={{ width: '600px',height: 20 * Object.keys(this.state.items[0]).length}}
+                style={{ width: '800px',height: 30 * Object.keys(this.state.items[0]).length, padding: '10px',backgroundColor: '#ffffff',border: '3px solid #005472'}}
                   items={[
                     (
                       <EuiContextMenuItem
                         key="A"
-                        icon="pencil"
                         onClick={() => { this.closePopover(item._id); }}
+
                       >
                         {keyValue}
                       </EuiContextMenuItem>
@@ -922,6 +757,9 @@ export default class extends Component {
     }
 
     return rows;
+  }else {
+    return <tr><td>Empty_index</td></tr>;
+  }
   }
 
   render() {
@@ -1027,92 +865,73 @@ export default class extends Component {
     if (this.areAnyRowsSelected() && this.state.anyRowsSelected) {
       optionalActionButtons = (
         <EuiFlexItem grow={false}>
-          <EuiButton color="danger" /*onClick={this.addValueLabel}*/ onClick={this.showModalValue} >Label value</EuiButton>
+          <EuiButton fill /*onClick={this.addValueLabel}*/ iconSide="left"
+          iconType="indexEdit"
+          onClick={this.showModalValue}
+          style={{ width: '145px',marginTop: '8px'}}>Edit field value</EuiButton>
+          <EuiSpacer size="s" />
           {modalValue}
         </EuiFlexItem>
       );
-    }
-
-    const formSample = (
-      <EuiForm>
-        <EuiFormRow
-          label="Label"
-        >
-          <EuiFieldText name="popfirst" onChange={this.handle.bind(this)}/>
-        </EuiFormRow>
-      </EuiForm>
-    );
-
-    let modal;
-
-    if (this.state.isModalVisible) {
-      modal = (
-        <EuiOverlayMask>
-          <EuiModal
-            onClose={this.closeModal}
-            style={{ width: '800px' }}
-          >
-            <EuiModalHeader>
-              <EuiModalHeaderTitle >
-                Add a label to this index
-              </EuiModalHeaderTitle>
-            </EuiModalHeader>
-
-            <EuiModalBody>
-              {formSample}
-              <Fragment>
-              <EuiSpacer size="m" />
-              <EuiFormRow
-                label="Type"
-              >
-        <EuiSelect
-          options={this.columnsType}
-          defaultValue={this.columnsType[0].value}
-          onChange={this.onChangeSelectType}
-        />
-        </EuiFormRow>
-          </Fragment>
-            </EuiModalBody>
-
-            <EuiModalFooter>
-              <EuiButtonEmpty
-                onClick={this.closeModal}
-              >
-                Cancel
-              </EuiButtonEmpty>
-
-              <EuiButton
-                onClick={this.saveLabel}
-                fill
-              >
-                Save
-              </EuiButton>
-            </EuiModalFooter>
-          </EuiModal>
-        </EuiOverlayMask>
+    }else {
+      optionalActionButtons = (
+      <EuiFlexItem grow={false}>
+        <EuiSpacer size="xl" />
+        <EuiSpacer size="l" />
+      </EuiFlexItem>
       );
     }
 
     return (
       <div>
-        <EuiFlexGroup gutterSize="m">
-          {optionalActionButtons}
+        <EuiHeader>
+          <EuiHeaderSection>
+            <EuiHeaderSectionItem border="right"
+            >
+            <EuiLink
+              href="#/"
+              onClick={(e) => {
+                this.setState({
+                  isPortalVisible:false
+                });
+              }}
+            >
+              <FontAwesome
+              className='far fa-arrow-circle-left'
+              name='far fa-arrow-circle-left'
+              size='3x'
+              style={{ color: '#025471', paddingLeft: '15px', marginTop: '5px' ,width: '70px'}}/>
+            </EuiLink>
+            </EuiHeaderSectionItem>
+            <EuiHeaderLogo
+              aria-label="Actions"
+              iconType="indexOpen"
+              size='xxl'
+              style={{ color: '#025471', paddingLeft: '27px', marginTop: '-8px' ,width: '60px'}}
 
+            />
+            <EuiTitle size="l">
+              <h1 style={{ color: '#025471', fontWeight: '900', padding:'10px'}}>Index labeling</h1>
+            </EuiTitle>
+          </EuiHeaderSection>
+        </EuiHeader>
+
+        {optionalActionButtons}
+
+        <EuiFlexGroup gutterSize="m">
           <EuiFlexItem>
-            <EuiFieldSearch fullWidth onChange={this.mySearch.bind(this)} placeholder="Search..." />
+            <EuiFieldSearch fullWidth onChange={this.mySearchHandle.bind(this)} placeholder="Search..." />
           </EuiFlexItem>
           <EuiFlexItem grow={false}>
           <div>
-            <EuiButton onClick={this.showModal}>
-          Add label
+            <EuiButton onClick={this.mySearch}>
+          Search
             </EuiButton>
-            {modal}
           </div>
           </EuiFlexItem>
         </EuiFlexGroup>
 
         <EuiSpacer size="m" />
-
         <EuiTable>
           <EuiTableHeader>
             {this.renderHeaderCells()}
@@ -1133,6 +952,8 @@ export default class extends Component {
           onChangeItemsPerPage={this.onChangeItemsPerPage}
           onChangePage={this.onChangePage}
         />
+        {optionalActionButtons}
+
         <br/><br/><br/><br/>
         {portal}
       </div>

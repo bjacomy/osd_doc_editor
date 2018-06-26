@@ -37,11 +37,8 @@ export default function (server) {
     }
   });
 
-  // Add a route to retrieve the status of an index by its name
+  // GET search
   server.route({
-    // We can use path variables in here, that can be accessed on the request
-    // object in the handler.
-    //path: '/api/label/index/{name}',
     path: '/api/label/search/{name}',
     method: 'GET',
     handler(req, reply) {
@@ -54,11 +51,8 @@ export default function (server) {
     }
   });
 
-  //GET /transactions/_search?q=type:sale
+  //POST _search
   server.route({
-    // We can use path variables in here, that can be accessed on the request
-    // object in the handler.
-    //path: '/api/label/index/{name}',
     path: '/api/label/{name}/_search',
     method: 'POST',
     handler(req, reply) {
@@ -70,23 +64,6 @@ export default function (server) {
        });
     }
   });
-
-  /*server.route({
-    // We can use path variables in here, that can be accessed on the request
-    // object in the handler.
-    //path: '/api/label/index/{name}',
-    path: '/api/label/{name}/_search',
-    method: 'POST',
-    handler(req, reply) {
-       call(req, 'search', {
-          index: req.params.name,
-          scroll: '1m',
-          body: req.payload
-       }).then(function (response) {
-             reply(response);
-       });
-    }
-  });*/
 
 
   //GET mapping

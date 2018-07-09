@@ -31,6 +31,7 @@ import {
   EuiFormRow,
   EuiFieldText,
   EuiButtonEmpty,
+  EuiCheckbox,
 } from '@elastic/eui';
 
 export default class extends Component {
@@ -44,6 +45,7 @@ export default class extends Component {
       { value: 'boolean', text: 'boolean' },
     ];
 
+    this.timerID = null;
     this.indices = this.props.names;
     this.closeModal = this.closeModal.bind(this);
     this.showModal = this.showModal.bind(this);
@@ -63,7 +65,7 @@ export default class extends Component {
       typeValue: '',
     };
   }
-
+/*
   componentDidMount() {
         setInterval(() => {
             this.setState(() => {
@@ -71,7 +73,11 @@ export default class extends Component {
                 return { unseen: "does not display" }
             });
         }, 1000);
-    }
+  }*/
+
+  componentWillUnmount() {
+    console.log("componentWillUnmount: Component is about to be removed from the DOM!");
+  }
 
     handle(event){
       this.setState({
@@ -122,7 +128,21 @@ export default class extends Component {
       var exempleTimeout = setTimeout(this.columnParam, 500);
     };
 
+    toggleItem = itemId => {
+      this.setState(previousState => {
+        const newItemIdToSelectedMap = {
+          ...previousState.checkboxIdToSelectedMap,
+          [itemId]: !previousState.checkboxIdToSelectedMap[itemId],
+        };
+        return {
+          checkboxIdToSelectedMap: newItemIdToSelectedMap,
+        };
+      });
+      var exempleTimeout = setTimeout(this.columnParam, 500);
+    }
+
   onChangeCheck = optionId => {
+    console.log(optionId);
     const newCheckboxIdToSelectedMap = ({ ...this.state.checkboxIdToSelectedMap, ...{
       [optionId]: !this.state.checkboxIdToSelectedMap[optionId],
     } });
@@ -136,6 +156,7 @@ export default class extends Component {
   onChangeSelect = e => {
     this.setState({
       value: e.target.value,
+      checkboxIdToSelectedMap:{}
     });
     this.checkMapping(e.target.value);
   }
@@ -156,19 +177,18 @@ export default class extends Component {
           var i = 0;
           for (var key in  result[this.state.value]["mappings"][type]["properties"]) {
             if(! result[this.state.value]["mappings"][type]["properties"][key]["type"]){
-              for (var subkey in  result[this.state.value]["mappings"][type]["properties"][key]["properties"]) {
-                var newKey=key+"."+ subkey;
                 var c = {};
                 c["id"] = i.toString();
-                c["label"] = newKey;
+                c["label"] = key+"  (Complex Field)" ;
+                c['disabled'] = true;
                 colonne.push(c);
                 i++;
-              }
             }
             else {
               var c = {};
               c["id"] = i.toString();
               c["label"] = key;
+              c["disabled"] = false;
               colonne.push(c);
               i++;
             }
@@ -230,6 +250,10 @@ export default class extends Component {
       .then(
         (result) => {
           this.checkMapping(index);
+          this.setState({
+            checkboxIdToSelectedMap:{}
+          })
+
         },
         (error) => {
 
@@ -267,7 +291,7 @@ export default class extends Component {
 
     const formSample = (
       <EuiForm>
-        <EuiFormRow label="Label">
+        <EuiFormRow label="Field name">
           <EuiFieldText name="popfirst" onChange={this.handle.bind(this)}/>
         </EuiFormRow>
       </EuiForm>
@@ -284,7 +308,7 @@ export default class extends Component {
           >
             <EuiModalHeader>
               <EuiModalHeaderTitle >
-                Add a label to this index
+                Add a field to this index
               </EuiModalHeaderTitle>
             </EuiModalHeader>
 
@@ -321,6 +345,17 @@ export default class extends Component {
       );
     }
 
+    let todos = this.state.checkboxes.map((todo) => {return <div key={todo.id} style={{marginBottom: '10px'}}><EuiCheckbox
+          id={todo.id}
+          label={todo.label}
+          checked={this.state.checkboxIdToSelectedMap[todo.id]}
+          onChange={this.toggleItem.bind(this, todo.id)}
+          disabled={todo.disabled}
+
+        />
+        </div>
+
+        });
     let switcher;
     if(this.state.value !== ''){
       switcher = (
@@ -381,11 +416,9 @@ export default class extends Component {
         <EuiSpacer size="l" />
         {switcher}
         <EuiSpacer size="l" />
-        <EuiCheckboxGroup
-          options={this.state.checkboxes}
-          idToSelectedMap={this.state.checkboxIdToSelectedMap}
-          onChange={this.onChangeCheck.bind(this)}
-        />
+        <Fragment>
+        {todos}
+        </Fragment>
 
         <EuiSpacer size="l" />
         {button}

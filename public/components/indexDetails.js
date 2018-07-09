@@ -56,6 +56,7 @@ import {
   RIGHT_ALIGNMENT,
   Pager,
   SortableProperties,
+  EuiPopoverTitle,
 } from '@elastic/eui';
 
 export default class extends Component {
@@ -73,9 +74,12 @@ export default class extends Component {
       columns:[],
       items: this.props.names,
       value: '',
-      isPortalVisible: false,
+      itemsAreTrue: false,
       checkAllDoc:false,
       anyRowsSelected:true,
+      isPortalVisible: false,
+      checkAllPageIndex:'',
+      currentPageIndex:0,
     };
 
     this.items =  this.props.names;
@@ -96,25 +100,36 @@ export default class extends Component {
     this.toggleItem = this.toggleItem.bind(this);
   }
 
-  componentDidMount() {
+  /*componentDidMount() {
         setInterval(() => {
             this.setState(() => {
                 //console.log('setting state');
                 return { unseen: "does not display" }
             });
         }, 1000);
+  }*/
+
+  componentWillUnmount() {
+    console.log("componentWillUnmount: Component is about to be removed from the DOM!");
   }
 
   togglePortal(allSelected,selectedI) {
+    if(allSelected && ! this.state.checkAllDoc){
+      this.setState({isPortalVisible: false,
+                    });
+    }else if(allSelected && this.state.checkAllDoc){
+      this.setState({isPortalVisible: true,
+                    });
+    }
     if(allSelected){
-      this.setState({ isPortalVisible: false,
-      anyRowsSelected: true,
-    });
+      this.setState({ itemsAreTrue: false,
+                      anyRowsSelected: true,
+                    });
     }
     else{
       if(! this.areAnyRowsSelected()){
         this.setState({
-          isPortalVisible: false,
+          itemsAreTrue: false,
         });
       }else {
         var isAllTrue = !this.state.itemIdToSelectedMap[selectedI];
@@ -134,15 +149,54 @@ export default class extends Component {
           isAllTrueIt = isAllTrueIt && existe;
         }
         this.setState({
-          isPortalVisible: isAllTrue && ((Object.keys(this.state.itemIdToSelectedMap).length) >= this.state.lastItemIndex) && isAllTrueIt == true,
+          itemsAreTrue: isAllTrue && ((Object.keys(this.state.itemIdToSelectedMap).length) >= this.state.lastItemIndex) && isAllTrueIt == true,
+          isPortalVisible: isAllTrue  && isAllTrueIt == true || this.state.checkAllDoc,
           anyRowsSelected:true
         });
       }
+    }console.log(this.state.isPortalVisible);
+    console.log(Object.keys(this.state.itemIdToSelectedMap).length);
+    for (var item in this.state.itemIdToSelectedMap) {
+      console.log(item);
+      console.log(Object.keys(this.state.itemIdToSelectedMap).indexOf(item));
     }
+
   }
 
   checkAllDocs = () => {
-      this.setState({ checkAllDoc: !this.state.checkAllDoc});
+    /*if (this.state.checkAllDoc==true) {
+      if (this.state.checkAllPageIndex == this.pager.totalPages -1) {
+        for (var item in this.state.itemIdToSelectedMap) {
+          if (Object.keys(this.state.itemIdToSelectedMap).indexOf(item) < (Object.keys(this.state.itemIdToSelectedMap).length - (this.pager.totalItems % this.state.itemsPerPage))) {
+            delete this.state.itemIdToSelectedMap[item];
+          }
+          //console.log(Object.keys(this.state.itemIdToSelectedMap).indexOf(item));
+        }
+      }else {
+        for (var item in this.state.itemIdToSelectedMap) {
+          if (Object.keys(this.state.itemIdToSelectedMap).indexOf(item) < (Object.keys(this.state.itemIdToSelectedMap).length - this.state.itemsPerPage)) {
+            delete this.state.itemIdToSelectedMap[item];
+          }
+          //console.log(Object.keys(this.state.itemIdToSelectedMap).indexOf(item));
+        }
+      }
+
+    }*/
+
+    if (this.state.checkAllDoc==true) {
+      this.setState({ checkAllDoc: !this.state.checkAllDoc,
+                      itemIdToSelectedMap: {},
+                      isPortalVisible: !this.state.isPortalVisible
+                    });
+    }else {
+      this.setState({ checkAllDoc: !this.state.checkAllDoc,
+
+                    });
+    }
+      /*if (Object.keys(this.state.itemIdToSelectedMap).length > 10) {
+        var enleves = this.state.itemIdToSelectedMap.splice(9, Object.keys(this.state.itemIdToSelectedMap).length - 9);
+      }*/
+
   }
 
   onChangeSelect = e => {
@@ -182,7 +236,7 @@ export default class extends Component {
         }
       }
     }
-    if (this.state.checkAllDoc == true && this .state.isPortalVisible == false) {
+    if (this.state.checkAllDoc == true && this .state.itemsAreTrue == false) {
         let script = {};
         let query = {};
         let query_string = {};
@@ -220,7 +274,7 @@ export default class extends Component {
             }
         )
     }
-    if (this.state.checkAllDoc == true && this .state.isPortalVisible == true) {
+    if (this.state.checkAllDoc == true && this .state.itemsAreTrue == true) {
       let script = {};
       let query = {};
       let query_string = {};
@@ -280,20 +334,26 @@ export default class extends Component {
               }
 
               this.pager = new Pager(total , itemPPage);
+              console.log(this.pager);
               if(this.pager.totalPages - 1 == pageIndex){
                 this.setState({
                   items: newItems,
                   lastItemIndex: (total % itemPPage) - 1,
+                  currentPageIndex: this.pager.currentPageIndex
                 });
               }else {
                 this.setState({
                   firstItemIndex: this.pager.getFirstItemIndex(),
                   lastItemIndex: this.pager.getLastItemIndex(),
                   items: newItems,
+                  currentPageIndex: this.pager.currentPageIndex
                 });
               }
               if (pageIndex != null) {
                   this.pager.goToPageIndex(pageIndex);
+                  this.setState({
+                    currentPageIndex: this.pager.currentPageIndex
+                  })
               }
             },
             (error) => {
@@ -315,43 +375,55 @@ export default class extends Component {
     })
     if (event.target.value ==='') {
       this.setState({ itemIdToSelectedMap: {},
-                    isPortalVisible:false
+                    isPortalVisible:false,
+                    checkAllDoc: false
       });
       var exempleTimeout = setTimeout(this.Search(event.target.value, 0, this.state.itemsPerPage), 100);
     }
   }
 
   closeModalValue() {
-    this.setState({ isModalValueVisible: false });
+    this.setState({ isModalValueVisible: false,
+                    value: ''
+                  });
   }
 
   mySearch= () => {
       this.setState({ itemIdToSelectedMap: {},
-                    isPortalVisible:false
+                    isPortalVisible:false,
+                    checkAllDoc: false
       });
       var exempleTimeout = setTimeout(this.Search(this.state.searchValue, 0, this.state.itemsPerPage), 100);
   }
 
   Search = (varS, from , itemPP) => {
+    console.log(from);
     if(this.state.items.length != 0){
 
         let index = this.state.items[0]._index;
         let type = this.state.items[0]._type;
         var body = {};var query = {};var sort = [];
-        if(from * itemPP < 10000)
+        if(from < 10000)
         {sort.push({"_id" : "asc"});
-          body["from"] = from;}
+          body["from"] = from;
+        body["size"] = itemPP;}
         else
         {sort.push({"_id" : "desc"});
-          if((this.pager.currentPageIndex+1) == this.pager.totalPages)
-          body["from"] = (this.pager.totalPages - (this.pager.currentPageIndex + 1)) * this.state.itemsPerPage ;
+          if(((from/itemPP)+1) == this.pager.totalPages){
+          //body["from"] = (this.pager.totalPages - (this.pager.currentPageIndex + 1)) * this.state.itemsPerPage ;
+          console.log(this.pager);
+          body["size"] = (this.pager.totalItems) % itemPP;
+          body["from"] = 0;}
           else
-          body["from"] = (this.pager.totalItems) % (this.pager.currentPageIndex+1);
+          {console.log(this.pager);
+            body["from"] = (this.pager.totalItems) % ((from/itemPP)+1);
+            body["size"] = itemPP;
+          }
         }
         body["sort"] = sort;
         query["match_all"] = {};
         body["query"] = query;
-        body["size"] = itemPP;
+        //body["size"] = itemPP;
 
         var fields = this.searchTab;
         if(varS != ''){
@@ -403,15 +475,19 @@ export default class extends Component {
       .then(res => res.json())
       .then(
         (result) => {
-
+          console.log(result);
+          console.log(this.state.items);
           if(result.hits.hits.length > 0){
             this.pager = new Pager(result.hits.total , itemPP);
+            console.log(this.pager);
             if(this.pager.totalPages - 1 == from/itemPP){
+              console.log("this.pager.totalPages - 1 == from/itemPP");
               this.setState({
                 items: result.hits.hits,
                 lastItemIndex: (result.hits.total % itemPP) - 1,
               });
             }else {
+              console.log("else");
               this.setState({
                 firstItemIndex: this.pager.getFirstItemIndex(),
                 lastItemIndex: this.pager.getLastItemIndex(),
@@ -419,6 +495,7 @@ export default class extends Component {
               });
             }
             if(this.state.checkAllDoc){
+              console.log("yes checkAllDoc");
               const allSelected = this.areAllItemsSelected();
               const newItemIdToSelectedMap = {};
               this.state.items.forEach(item => newItemIdToSelectedMap[item._id] = !allSelected);
@@ -473,7 +550,7 @@ export default class extends Component {
     };
     tab.push(act);
 
-    selectTab.push({ value: 'choose label', text: 'choose label' , "disabled" : true });
+    selectTab.push({ value: 'choose field', text: 'choose field' , "disabled" : true });
     for (var v in this.columnsProp) {
       let select = {
           text: this.columnsProp[v],
@@ -494,11 +571,13 @@ export default class extends Component {
     this.setState({
       itemsPerPage,
     });
+    console.log(this.state.columns);
 
   }
 
   onChangePage = pageIndex => {
     var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * this.state.itemsPerPage, this.state.itemsPerPage), 500);
+        console.log(this.state.itemIdToSelectedMap);
   };
 
   toggleItem = itemId => {
@@ -527,10 +606,14 @@ export default class extends Component {
     });
 
     if(allSelected)
-    { this.setState({ isPortalVisible: false,
-                      checkAllDoc: false});
+    { this.setState({ itemsAreTrue: false,
+                      checkAllDoc: false,
+                      isPortalVisible: false
+                    });
     }else {
-      this.setState({ isPortalVisible: true});
+      this.setState({ itemsAreTrue: true,
+                      isPortalVisible: true
+                    });
     }
   }
 
@@ -634,7 +717,7 @@ export default class extends Component {
                       <EuiTextColor>
                         {key}
                       </EuiTextColor>
-                    </span>    {val}
+                    </span>    <EuiTextColor color="default">{val}</EuiTextColor>
                     <EuiSpacer size="s" />
                 </div>
 
@@ -655,7 +738,7 @@ export default class extends Component {
             </EuiTableRowCellCheckbox>
           );}
           else {
-            if(this.state.isPortalVisible)
+            if(this.state.itemsAreTrue)
               {return (
                 <EuiTableRowCellCheckbox key={column.id}>
                   <EuiCheckbox
@@ -688,6 +771,7 @@ export default class extends Component {
             >
               <EuiPopover
                 id={`${item._id}-actions`}
+                ownFocus
                 button={(
                   <EuiButtonIcon
                     aria-label="Actions"
@@ -699,23 +783,15 @@ export default class extends Component {
                 isOpen={this.isPopoverOpen(item._id)}
                 closePopover={() => this.closePopover(item._id)}
                 panelPaddingSize="none"
-                anchorPosition="leftUp"
+                anchorPosition="leftCenter"
 
               >
-                <EuiContextMenuPanel
-                style={{ width: '800px',height: 30 * Object.keys(this.state.items[0]).length, padding: '10px',backgroundColor: '#ffffff',border: '3px solid #005472'}}
-                  items={[
-                    (
-                      <EuiContextMenuItem
-                        key="A"
-                        onClick={() => { this.closePopover(item._id); }}
 
-                      >
-                        {keyValue}
-                      </EuiContextMenuItem>
-                    )
-                  ]}
-                />
+              <EuiPopoverTitle style={{ width: '900px',height: 31 * Object.keys(this.state.items[0]).length, padding: '10px',backgroundColor: '#ffffff',border: '3px solid #005472'}}>
+                {keyValue}
+              </EuiPopoverTitle>
+
+
               </EuiPopover>
             </EuiTableRowCell>
           );
@@ -757,8 +833,6 @@ export default class extends Component {
     }
 
     return rows;
-  }else {
-    return <tr><td>Empty_index</td></tr>;
   }
   }
 
@@ -782,7 +856,7 @@ export default class extends Component {
         </EuiPortal>
       );
     }
-    if (this.state.isPortalVisible == true && this.state.checkAllDoc == true)  {
+    if (this.state.isPortalVisible == true && this.state.checkAllDoc == true && this.state.itemsAreTrue)  {
       portal = (
         <EuiPortal>
           <EuiBottomBar>
@@ -799,17 +873,73 @@ export default class extends Component {
         </EuiPortal>
       );
     }
+    if (this.state.isPortalVisible == true && this.state.checkAllDoc == true && ! this.state.itemsAreTrue)  {
+      portal = (
+        <EuiPortal>
+          <EuiBottomBar>
+          <p align="center">
+            All documents are selected except those you have unchecked. {(
+              <EuiLink
+                onClick={this.checkAllDocs}
+              >
+                cancel the selection?
+              </EuiLink>
+            )}
+          </p>
+          </EuiBottomBar>
+        </EuiPortal>
+      );
+    }
 
     let optionalActionButtons;
     const formSampleValue = (
       <EuiForm>
         <EuiFormRow
-          label="Label Value"
+          label="Value"
         >
           <EuiFieldText name="popValue" onChange={this.handleValue.bind(this)}/>
         </EuiFormRow>
       </EuiForm>
     );
+
+    let empty;
+    if(this.state.items.length == 0){
+      empty = (
+        <div style={{display: 'block',marginLeft: '40%', marginRight: 'auto'}}>
+        <FontAwesome
+        className='fas fa-exclamation-triangle'
+        name='fas fa-exclamation-triangle'
+        size='2x'
+        style={{ color: '#0079a5',height: '40px'}}
+        />
+        <EuiTitle size="m">
+          <h1 style={{ color: '#0079a5', fontWeight: '900', padding:'10px', marginTop: '-50px', marginLeft:'25px'}}>Empty Index</h1>
+        </EuiTitle>
+        </div>
+      );
+    }
+
+    let saveB;
+    if (this.state.value !='') {
+      saveB = (
+      <EuiButton
+        onClick={this.addValueLabel}
+        fill
+      >
+        Save
+      </EuiButton>
+    );
+    }else {
+      saveB = (
+      <EuiButton
+        onClick={this.addValueLabel}
+        fill
+        isDisabled
+      >
+        Save
+      </EuiButton>
+    );
+    }
 
     let modalValue;
 
@@ -822,14 +952,14 @@ export default class extends Component {
           >
             <EuiModalHeader>
               <EuiModalHeaderTitle >
-                Add a value for the label
+                Add a value to this field
               </EuiModalHeaderTitle>
             </EuiModalHeader>
 
             <EuiModalBody>
               <Fragment>
               <EuiFormRow
-                label="Label"
+                label="Field name"
               >
         <EuiSelect
           options={this.columnsProp}
@@ -850,12 +980,7 @@ export default class extends Component {
                 Cancel
               </EuiButtonEmpty>
 
-              <EuiButton
-                onClick={this.addValueLabel}
-                fill
-              >
-                Save
-              </EuiButton>
+              {saveB}
             </EuiModalFooter>
           </EuiModal>
         </EuiOverlayMask>
@@ -894,6 +1019,7 @@ export default class extends Component {
                 this.setState({
                   isPortalVisible:false
                 });
+                //this.componentWillUnmount();
               }}
             >
               <FontAwesome
@@ -917,7 +1043,7 @@ export default class extends Component {
         </EuiHeader>
 
         {optionalActionButtons}
-
+        {empty}
         <EuiFlexGroup gutterSize="m">
           <EuiFlexItem>
             <EuiFieldSearch fullWidth onChange={this.mySearchHandle.bind(this)} placeholder="Search..." />
@@ -945,12 +1071,12 @@ export default class extends Component {
         <EuiSpacer size="m" />
 
         <EuiTablePagination
-          activePage={this.pager.getCurrentPageIndex()}
+          activePage={this.state.currentPageIndex}
           itemsPerPage={this.state.itemsPerPage}
           itemsPerPageOptions={[5, 10, 20]}
           pageCount={this.pager.getTotalPages()}
-          onChangeItemsPerPage={this.onChangeItemsPerPage}
-          onChangePage={this.onChangePage}
+          onChangeItemsPerPage={this.onChangeItemsPerPage.bind(this)}
+          onChangePage={this.onChangePage.bind(this)}
         />
         {optionalActionButtons}
 

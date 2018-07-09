@@ -85,8 +85,8 @@ uiModules
       total = this.status.hits.total;
       for (var v in  this.status.hits.hits) {
         for (var key in  this.mapping[this.index]["mappings"][type]["properties"]) {
-          if(! this.mapping[this.index]["mappings"][type]["properties"][key]["type"]){
-            for (var subkey in  this.mapping[this.index]["mappings"][type]["properties"][key]["properties"]) {
+          if(this.mapping[this.index]["mappings"][type]["properties"][key]["type"]){
+            /*for (var subkey in  this.mapping[this.index]["mappings"][type]["properties"][key]["properties"]) {
               if(this.status.hits.hits[v]._source[key])
               {
                 if(this.status.hits.hits[v]._source[key][subkey])
@@ -102,7 +102,7 @@ uiModules
               }
             }
           }
-          else {
+          else {*/
             if(this.status.hits.hits[v]._source[key])
             {
               this.status.hits.hits[v][key]=this.status.hits.hits[v]._source[key];

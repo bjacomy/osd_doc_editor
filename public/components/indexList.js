@@ -2,7 +2,7 @@ import React, {
   Component,
   Fragment,
 } from 'react';
-
+import ReactDOM from 'react-dom';
 import {
   EuiSelect,
   EuiCheckboxGroup,
@@ -223,10 +223,18 @@ export default class extends Component {
     });
   }
 
+  "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+
   getBody= () => {
     var mapReq = {};
     var type = {};
     type["type"] = this.state.typeValue;
+    type["fields"] = {"keyword": {"type": "keyword","ignore_above": 256}};
     var property = {};
     property[this.state.inputLabel] = type;
     mapReq["properties"] = property;
@@ -272,6 +280,9 @@ export default class extends Component {
         <EuiButton href={"#/index/" + this.state.value +"/"+ this.state.link}
         iconSide="right"
         iconType="arrowRight"
+        onClick={() => {
+          ReactDOM.unmountComponentAtNode(ReactDOM.findDOMNode(this).parentNode);
+        }}
         >
           Next
         </EuiButton>
@@ -396,7 +407,7 @@ export default class extends Component {
               />
             </EuiHeaderSectionItem>
             <EuiTitle size="l">
-              <h1 style={{ color: '#025471', fontWeight: '900', padding:'10px'}}>Index labeling</h1>
+              <h1 style={{ color: '#025471', fontWeight: '900', padding:'10px'}}>Doc Editor</h1>
             </EuiTitle>
           </EuiHeaderSection>
         </EuiHeader>

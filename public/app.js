@@ -59,7 +59,7 @@ uiModules
   this.index = $routeParams.name;
   this.col = $routeParams.col;
   $scope.index = this.index;
-  var total = 0;
+  var total = 0;var properties;
   var body = {};var query = {};var sort = [];
   sort.push({"_id" : "asc"});
   body["sort"] = sort;
@@ -70,7 +70,11 @@ uiModules
     this.status = response.data;
     $http.get(`../api/label/${this.index}/_mapping`).then((response) => {
       this.mapping = response.data;
+      console.log(this.mapping);
+      console.log(Object.keys(this.mapping)[0]);
+      console.log(Object.keys(this.mapping[Object.keys(this.mapping)[0]]["mappings"])[0]);
       var type = Object.keys(this.mapping[this.index]["mappings"])[0];
+      properties = this.mapping[this.index]["mappings"][type]["properties"];
       var valeurColonne = [];
       for (var key in  this.mapping[this.index]["mappings"][type]["properties"]) {
         if(! key.startsWith("_")){
@@ -125,14 +129,16 @@ uiModules
           }
         }
       }
-      display_UI($scope.data, colonneFinal, rechercheColonne, total);
+      display_UI($scope.data, colonneFinal, rechercheColonne, total, this.mapping);
     });
   });
 
   //Affichage des données dans une table html après conversion
-  function display_UI(tabNames, col, rechercheC, total) {
+  function display_UI(tabNames, col, rechercheC, total, mapping) {
+
+
     ReactDOM.render(
-      <Details names={tabNames} colonne={col} recherche={rechercheC} total={total}/>,
+      <Details names={tabNames} colonne={col} recherche={rechercheC} total={total} mapping={mapping}/>,
       document.getElementById("react_tabs")
     );
   };

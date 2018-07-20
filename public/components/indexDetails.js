@@ -3,6 +3,7 @@ import React, {
   Fragment,
 } from 'react';
 import FontAwesome from 'react-fontawesome';
+import ReactDOM from 'react-dom';
 import {
   EuiBadge,
   EuiHealth,
@@ -57,11 +58,20 @@ import {
   Pager,
   SortableProperties,
   EuiPopoverTitle,
+  EuiDescriptionList,
+  EuiComboBox,
 } from '@elastic/eui';
 
 export default class extends Component {
   constructor(props) {
     super(props);
+
+    this.columnsType = [
+      { value: 'choose type', text: 'choose type' , "disabled" : true },
+      { value: 'text', text: 'text' },
+      { value: 'double', text: 'double' },
+      { value: 'boolean', text: 'boolean' },
+    ];
 
     this.state = {
       itemIdToSelectedMap: {},
@@ -69,6 +79,7 @@ export default class extends Component {
       itemsPerPage: 10,
       searchValue:'',
       isModalValueVisible: false,
+      isModalVisible: false,
       inputValue: '',
       inputLabel: '',
       columns:[],
@@ -80,19 +91,27 @@ export default class extends Component {
       isPortalVisible: false,
       checkAllPageIndex:'',
       currentPageIndex:0,
+      itemIdToExpandedRowMap: {},
     };
 
     this.items =  this.props.names;
     this.columnsProp = this.props.colonne;
     this.searchTab = this.props.recherche;
     this.total = this.props.total;
+    this.mapping = this.props.mapping;
     this.state.columns =this.columnList();
+    this.bodyAdd = {};
+    this.bodyEdit = {};
+    this.indexFd = this.indexField();
+    this.selectedFieldValues = [];
 
     this.pager = new Pager(this.total, this.state.itemsPerPage);
     this.state.firstItemIndex = this.pager.getFirstItemIndex();
     this.state.lastItemIndex = this.pager.getLastItemIndex();
     this.closeModalValue = this.closeModalValue.bind(this);
     this.showModalValue = this.showModalValue.bind(this);
+    this.closeModal = this.closeModal.bind(this);
+    this.showModal = this.showModal.bind(this);
     this.columnList = this.columnList.bind(this);
     this.mySearch = this.mySearch.bind(this);
     this.togglePortal = this.togglePortal.bind(this);
@@ -110,7 +129,7 @@ export default class extends Component {
   }*/
 
   componentWillUnmount() {
-    console.log("componentWillUnmount: Component is about to be removed from the DOM!");
+    console.log('UNMOUNTED');
   }
 
   togglePortal(allSelected,selectedI) {
@@ -154,35 +173,10 @@ export default class extends Component {
           anyRowsSelected:true
         });
       }
-    }console.log(this.state.isPortalVisible);
-    console.log(Object.keys(this.state.itemIdToSelectedMap).length);
-    for (var item in this.state.itemIdToSelectedMap) {
-      console.log(item);
-      console.log(Object.keys(this.state.itemIdToSelectedMap).indexOf(item));
     }
-
   }
 
   checkAllDocs = () => {
-    /*if (this.state.checkAllDoc==true) {
-      if (this.state.checkAllPageIndex == this.pager.totalPages -1) {
-        for (var item in this.state.itemIdToSelectedMap) {
-          if (Object.keys(this.state.itemIdToSelectedMap).indexOf(item) < (Object.keys(this.state.itemIdToSelectedMap).length - (this.pager.totalItems % this.state.itemsPerPage))) {
-            delete this.state.itemIdToSelectedMap[item];
-          }
-          //console.log(Object.keys(this.state.itemIdToSelectedMap).indexOf(item));
-        }
-      }else {
-        for (var item in this.state.itemIdToSelectedMap) {
-          if (Object.keys(this.state.itemIdToSelectedMap).indexOf(item) < (Object.keys(this.state.itemIdToSelectedMap).length - this.state.itemsPerPage)) {
-            delete this.state.itemIdToSelectedMap[item];
-          }
-          //console.log(Object.keys(this.state.itemIdToSelectedMap).indexOf(item));
-        }
-      }
-
-    }*/
-
     if (this.state.checkAllDoc==true) {
       this.setState({ checkAllDoc: !this.state.checkAllDoc,
                       itemIdToSelectedMap: {},
@@ -193,16 +187,41 @@ export default class extends Component {
 
                     });
     }
-      /*if (Object.keys(this.state.itemIdToSelectedMap).length > 10) {
-        var enleves = this.state.itemIdToSelectedMap.splice(9, Object.keys(this.state.itemIdToSelectedMap).length - 9);
-      }*/
-
   }
 
   onChangeSelect = e => {
+    this.selectedFieldValues = [];
     this.setState({
       value: e.target.value,
     });
+    let index = this.state.items[0]._index;
+    let type = this.state.items[0]._type;
+    var body = {};var aggs = {};var terms = {};var val = {};
+    terms['field']=e.target.value+'.keyword';
+    terms['size']=20;
+    val['terms']=terms;
+    aggs['val']=val;
+    body['aggs']= aggs;
+    body['size']= 0;
+    fetch("../api/label/"+index+"/_search", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'kbn-xsrf': 'reporting'
+        },
+        body: JSON.stringify(body)
+      })
+      .then(res => res.json())
+      .then(
+        (result) => {
+          for (var variable in result.aggregations.val.buckets) {
+            this.selectedFieldValues.push(result.aggregations.val.buckets[variable].key)
+          }
+        },
+        (error) => {
+
+        }
+      )
   }
 
   addValueLabel= () => {
@@ -323,18 +342,19 @@ export default class extends Component {
           .then(res => res.json())
           .then(
             (result) => {
-              var mapping = result;
+             var mapping = result;
               for (var v in  newItems) {
                 for (var key in  mapping[index]["mappings"][type]["properties"]) {
-                  if(newItems[v]._source[key])
-                  {newItems[v][key]=newItems[v]._source[key];}
-                  else
-                  {newItems[v][key]="";}
+                  if(mapping[index]["mappings"][type]["properties"][key]["type"]){
+                    if(newItems[v]._source[key])
+                    {newItems[v][key]=newItems[v]._source[key];}
+                    else
+                    {newItems[v][key]="";}
+                  }
                 }
               }
 
               this.pager = new Pager(total , itemPPage);
-              console.log(this.pager);
               if(this.pager.totalPages - 1 == pageIndex){
                 this.setState({
                   items: newItems,
@@ -386,6 +406,7 @@ export default class extends Component {
     this.setState({ isModalValueVisible: false,
                     value: ''
                   });
+    this.selectedFieldValues =  []
   }
 
   mySearch= () => {
@@ -397,25 +418,21 @@ export default class extends Component {
   }
 
   Search = (varS, from , itemPP) => {
-    console.log(from);
-    if(this.state.items.length != 0){
-
-        let index = this.state.items[0]._index;
-        let type = this.state.items[0]._type;
+    //if(this.state.items.length != 0){
+    var index = Object.keys(this.mapping)[0]
+    var type = Object.keys(this.mapping[Object.keys(this.mapping)[0]]["mappings"])[0];
         var body = {};var query = {};var sort = [];
         if(from < 10000)
-        {sort.push({"_id" : "asc"});
+        { sort.push({"_id" : "asc"});
           body["from"] = from;
-        body["size"] = itemPP;}
+          body["size"] = itemPP;}
         else
-        {sort.push({"_id" : "desc"});
+        { sort.push({"_id" : "desc"});
           if(((from/itemPP)+1) == this.pager.totalPages){
-          //body["from"] = (this.pager.totalPages - (this.pager.currentPageIndex + 1)) * this.state.itemsPerPage ;
-          console.log(this.pager);
-          body["size"] = (this.pager.totalItems) % itemPP;
-          body["from"] = 0;}
+            body["size"] = (this.pager.totalItems) % itemPP;
+            body["from"] = 0;}
           else
-          {console.log(this.pager);
+          {
             body["from"] = (this.pager.totalItems) % ((from/itemPP)+1);
             body["size"] = itemPP;
           }
@@ -423,7 +440,6 @@ export default class extends Component {
         body["sort"] = sort;
         query["match_all"] = {};
         body["query"] = query;
-        //body["size"] = itemPP;
 
         var fields = this.searchTab;
         if(varS != ''){
@@ -475,19 +491,14 @@ export default class extends Component {
       .then(res => res.json())
       .then(
         (result) => {
-          console.log(result);
-          console.log(this.state.items);
           if(result.hits.hits.length > 0){
             this.pager = new Pager(result.hits.total , itemPP);
-            console.log(this.pager);
             if(this.pager.totalPages - 1 == from/itemPP){
-              console.log("this.pager.totalPages - 1 == from/itemPP");
               this.setState({
                 items: result.hits.hits,
                 lastItemIndex: (result.hits.total % itemPP) - 1,
               });
             }else {
-              console.log("else");
               this.setState({
                 firstItemIndex: this.pager.getFirstItemIndex(),
                 lastItemIndex: this.pager.getLastItemIndex(),
@@ -495,16 +506,16 @@ export default class extends Component {
               });
             }
             if(this.state.checkAllDoc){
-              console.log("yes checkAllDoc");
               const allSelected = this.areAllItemsSelected();
               const newItemIdToSelectedMap = {};
               this.state.items.forEach(item => newItemIdToSelectedMap[item._id] = !allSelected);
-              //this.state.itemIdToSelectedMap.concat(newItemIdToSelectedMap)
               this.setState({
                 itemIdToSelectedMap: Object.assign(newItemIdToSelectedMap, this.state.itemIdToSelectedMap),
               });
             }
-            this.requestMapping(result.hits.total, result.hits.hits, from/itemPP, itemPP );
+            //this.requestMapping(result.hits.total, result.hits.hits, from/itemPP, itemPP );
+            setTimeout(function() { this.requestMapping(result.hits.total, result.hits.hits, from/itemPP, itemPP ) }.bind(this), 1000);
+
 
           }
         },
@@ -512,7 +523,7 @@ export default class extends Component {
 
         }
       )
-    }
+    //}
   }
 
   showModalValue= () => {
@@ -565,19 +576,20 @@ export default class extends Component {
   }
 
   onChangeItemsPerPage = itemsPerPage => {
-    var pageIndex = this.pager.currentPageIndex;
+    var pageIndex = 0;
     this.pager.setItemsPerPage(itemsPerPage);
     var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * itemsPerPage, itemsPerPage), 500);
     this.setState({
       itemsPerPage,
+      itemIdToExpandedRowMap: {},
     });
-    console.log(this.state.columns);
-
   }
 
   onChangePage = pageIndex => {
     var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * this.state.itemsPerPage, this.state.itemsPerPage), 500);
-        console.log(this.state.itemIdToSelectedMap);
+    this.setState({
+      itemIdToExpandedRowMap: {},
+    });
   };
 
   toggleItem = itemId => {
@@ -662,6 +674,153 @@ export default class extends Component {
     return this.state.itemIdToOpenActionsPopoverMap[itemId];
   };
 
+  closeModal() {
+    this.setState({ isModalVisible: false });
+  }
+
+  showModal() {
+    this.setState({ isModalVisible: true });
+  }
+
+  handle(event){
+    this.setState({
+      inputLabel: event.target.value
+    })
+  }
+
+  indexField(){
+    var tab = [];
+    if(this.state.items.length != 0){
+    for (var v in Object.keys(this.state.items[0])) {
+      if((! Object.keys(this.state.items[0])[v].startsWith("_"))&&(! Object.keys(this.state.items[0])[v].startsWith("$"))&&( ! Object.keys(this.state.items[0])[v].startsWith("sort"))) {
+        tab.push(Object.keys(this.state.items[0])[v])
+        this.bodyAdd[Object.keys(this.state.items[0])[v]] = '';
+      }
+    }
+    console.log(this.mapping);
+    return tab;
+  }else {
+    var index = Object.keys(this.mapping)[0]
+    var type = Object.keys(this.mapping[Object.keys(this.mapping)[0]]["mappings"])[0];
+    for (var v in Object.keys(this.mapping[index]["mappings"][type]["properties"])) {
+      if((! Object.keys(this.mapping[index]["mappings"][type]["properties"])[v].startsWith("_"))&&(! Object.keys(this.mapping[index]["mappings"][type]["properties"])[v].startsWith("$"))&&( ! Object.keys(this.mapping[index]["mappings"][type]["properties"])[v].startsWith("sort"))) {
+        tab.push(Object.keys(this.mapping[index]["mappings"][type]["properties"])[v])
+        this.bodyAdd[Object.keys(this.mapping[index]["mappings"][type]["properties"])[v]] = '';
+      }
+    }
+    return tab;
+  }
+  }
+
+  handleInput(event){
+    this.bodyAdd[event.target.name] = event.target.value;
+  }
+
+  handleDelete(id){
+    if(this.state.items.length != 0){
+    let index = this.state.items[0]._index;
+    let type = this.state.items[0]._type;
+    fetch("../api/label/"+index+"/"+type+"/"+id, {
+    method: 'delete',
+    headers: {
+      'Content-Type': 'application/json',
+      'kbn-xsrf': 'reporting'
+      }
+    })
+    .then(res => res.json())
+    .then(
+    (result) => {
+      if(this.state.items.length == 1){
+        if (this.total <= 1) {
+          this.pager = new Pager(0 , this.state.itemsPerPage);
+
+            this.setState({
+              items: [],
+            });
+            setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
+
+        } else {
+          var exempleTimeout = setTimeout(this.Search(this.state.searchValue, 0 * this.state.itemsPerPage, this.state.itemsPerPage), 500);
+
+        }
+      }else {
+        setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
+      }
+    },
+    (error) => {
+
+    }
+  )
+  }
+  }
+
+  addDocument = () => {
+    //if(this.state.items.length != 0){
+    var index = Object.keys(this.mapping)[0]
+    var type = Object.keys(this.mapping[Object.keys(this.mapping)[0]]["mappings"])[0];
+    fetch("../api/label/"+index+"/"+type+"/", {
+        method: 'post',
+        headers: {
+          'Content-Type': 'application/json',
+          'kbn-xsrf': 'reporting'
+        },
+        body:JSON.stringify(this.bodyAdd)
+      })
+      .then(res => res.json())
+      .then(
+        (result) => {
+          setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
+        },
+        (error) => {
+
+        }
+      )
+      this.closeModal();
+  //  }
+  }
+
+  handleInputEdit(event){
+    this.bodyEdit[event.target.name] = event.target.value;
+  }
+
+  editDoc(id){
+    if(this.state.items.length != 0){let index = this.state.items[0]._index;
+    let type = this.state.items[0]._type;
+      let body = {
+        "doc": this.bodyEdit
+      };
+        fetch("../api/label/"+index+"/"+type+"/"+id+"/_update", {
+            method: 'post',
+            headers: {
+              'Content-Type': 'application/json',
+              'kbn-xsrf': 'reporting'
+            },
+            body: JSON.stringify(body)
+          })
+          .then(res => res.json())
+          .then(
+            (result) => {
+              setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
+            },
+            (error) => {
+
+            }
+        )}
+  }
+
+  toggleDetails = (item) => {
+    const itemIdToExpandedRowMap = { ...this.state.itemIdToExpandedRowMap };
+    if (itemIdToExpandedRowMap[item._id]) {
+      delete itemIdToExpandedRowMap[item._id];
+    } else {
+      const listItems = [];
+      itemIdToExpandedRowMap[item._id] = (
+        <EuiDescriptionList listItems={listItems} />
+      );
+    }
+    this.setState({ itemIdToExpandedRowMap });
+  };
+
   renderHeaderCells() {
     return this.state.columns.map((column, columnIndex) => {
       if (column.isCheckbox) {
@@ -694,20 +853,37 @@ export default class extends Component {
   }
 
   renderRows() {
+    var expRow;
     if(this.state.items.length != 0){
     const renderRow = item => {
       const cells = this.state.columns.map(column => {
         const cell = item[column.id];
-        let poptab;
+        let poptab = Object.values(item);
         let key;let val;
-        let popkey;
+        let popkey = Object.keys(item);
         let act = "";
         let child;
 
-            poptab = Object.values(item);
-            popkey = Object.keys(item);
-
             const keyValue = popkey.map(k => {
+              if((k != "_source") && (! k.startsWith("_")) && (! k.startsWith("_")) && (! k.startsWith("sort")))
+              { key = k;
+                val = item[k];
+
+              return (
+                <div key={key}>
+                        <EuiFormRow key={k} label={k} style={{ marginLeft: '80px' }}>
+
+                          <EuiFieldText name={key} onChange={this.handleInputEdit.bind(this)} defaultValue={val+''}/>
+
+                        </EuiFormRow>
+                    <EuiSpacer size="xs" />
+                </div>
+
+              );
+            }}
+            );
+
+            expRow = popkey.map(k => {
               if(k != "_source")
               { key = k + ":";
                 val = item[k];
@@ -773,24 +949,56 @@ export default class extends Component {
                 id={`${item._id}-actions`}
                 ownFocus
                 button={(
-                  <EuiButtonIcon
-                    aria-label="Actions"
-                    iconType="iInCircle"
-                    style={{ width: '80px',height:'80px'}}
-                    onClick={() => this.togglePopover(item._id)}
-                  />
+                  <div style={{ width: '121px'}}>
+                    <EuiButtonIcon
+                      aria-label="Actions"
+                      iconType="pencil"
+                      style={{ width: '40px',height:'40px'}}
+                      onClick={() => this.togglePopover(item._id)}
+                    />
+                    <EuiButtonIcon
+                      aria-label="Actions"
+                      iconType="trash"
+                      style={{ width: '40px',height:'40px', color: 'red'}}
+                      onClick={() => {var result = confirm("Want to delete?");
+                      if (result) {
+                          this.handleDelete(item._id)}}
+                      }
+                    />
+                    <EuiButtonIcon
+                      style={{ width: '40px',height:'40px'}}
+                      onClick={() => this.toggleDetails(item)}
+                      aria-label={this.state.itemIdToExpandedRowMap[item._id] ? 'Collapse' : 'Expand'}
+                      iconType={this.state.itemIdToExpandedRowMap[item._id] ? 'arrowUp' : 'arrowDown'}
+                    />
+                  </div>
                 )}
                 isOpen={this.isPopoverOpen(item._id)}
                 closePopover={() => this.closePopover(item._id)}
                 panelPaddingSize="none"
                 anchorPosition="leftCenter"
-
               >
 
-              <EuiPopoverTitle style={{ width: '900px',height: 31 * Object.keys(this.state.items[0]).length, padding: '10px',backgroundColor: '#ffffff',border: '3px solid #005472'}}>
+              <EuiPopoverTitle style={{ width: '820px',height: '440px', padding: '20px',backgroundColor: '#ffffff',border: '3px solid #005472',overflowY:'auto'}}>
+                <EuiTitle size="m">
+                  <h1 style={{ color: '#005472', fontWeight: '900', textAlign:'center', paddingBottom:'40px'}}>INDEX DETAILS</h1>
+                </EuiTitle>
                 {keyValue}
-              </EuiPopoverTitle>
 
+                <EuiButtonEmpty
+                  onClick={() => this.closePopover(item._id)}
+                  style={{float:'right',position: 'fixed',right: '165px',bottom: '15px'}}
+                >
+                  Cancel
+                </EuiButtonEmpty>
+                <EuiButton
+                  onClick={() => this.editDoc(item._id)}
+                  fill
+                  style={{float:'right',position: 'fixed',right: '30px',bottom: '15px'}}
+                >
+                  Save
+                </EuiButton>
+              </EuiPopoverTitle>
 
               </EuiPopover>
             </EuiTableRowCell>
@@ -816,22 +1024,33 @@ export default class extends Component {
       });
 
       return (
+        <EuiTableBody key={item._id+'-'} style={{ display:'contents'}}>
         <EuiTableRow
           key={item._id}
           isSelected={this.isItemSelected(item._id)}
+
         >
           {cells}
         </EuiTableRow>
+        <EuiTableRow
+          key={item._id+'_'}
+          isSelected={this.isItemSelected(item._id)}
+          style={{ display: this.state.itemIdToExpandedRowMap[item._id] ? 'contents' : 'none'}}
+        >
+        <td style={{ backgroundColor: '#fbfbfb'}}></td>
+        <td colSpan={this.state.columns.length - 1} style={{ paddingTop: '10px', backgroundColor: '#fbfbfb'}}>
+          {expRow}
+        </td>
+        </EuiTableRow>
+        </EuiTableBody>
       );
     };
 
     const rows = [];
-
     for (let itemIndex = this.state.firstItemIndex; itemIndex <= this.state.lastItemIndex; itemIndex++) {
       const item = this.state.items[itemIndex];
       rows.push(renderRow(item));
     }
-
     return rows;
   }
   }
@@ -892,15 +1111,14 @@ export default class extends Component {
     }
 
     let optionalActionButtons;
-    const formSampleValue = (
-      <EuiForm>
-        <EuiFormRow
-          label="Value"
-        >
-          <EuiFieldText name="popValue" onChange={this.handleValue.bind(this)}/>
-        </EuiFormRow>
-      </EuiForm>
+
+    const formS = this.selectedFieldValues.map(k => {
+      return (
+          <option key={k} value={k}/>
+      );
+    }
     );
+
 
     let empty;
     if(this.state.items.length == 0){
@@ -955,22 +1173,26 @@ export default class extends Component {
                 Add a value to this field
               </EuiModalHeaderTitle>
             </EuiModalHeader>
-
+            <EuiSpacer size="s" />
+            ( All aggregatable fields are autocompleted. )
             <EuiModalBody>
               <Fragment>
-              <EuiFormRow
-                label="Field name"
-              >
-        <EuiSelect
-          options={this.columnsProp}
-          defaultValue={this.columnsProp[0].value}
-          onChange={this.onChangeSelect}
-        />
-        </EuiFormRow>
-
-              <EuiSpacer size="m" />
+                <EuiFormRow
+                  label="Field name"
+                >
+                  <EuiSelect
+                    options={this.columnsProp}
+                    defaultValue={this.columnsProp[0].value}
+                    onChange={this.onChangeSelect}
+                  />
+                </EuiFormRow>
+                <EuiSpacer size="m" />
+                <label>value</label><br></br>
+                <EuiFieldText list="val" type="text" id="choix_val" name="popValue" onChange={this.handleValue.bind(this)}/>
+                <datalist id="val">
+                  {formS}
+                </datalist>
           </Fragment>
-              {formSampleValue}
             </EuiModalBody>
 
             <EuiModalFooter>
@@ -1007,19 +1229,79 @@ export default class extends Component {
       );
     }
 
+    const formSample = this.indexFd.map(k => {
+      var index = Object.keys(this.mapping)[0]
+      var type = Object.keys(this.mapping[Object.keys(this.mapping)[0]]["mappings"])[0];
+      //for (var v in Object.keys(this.mapping[index]["mappings"][type]["properties"])) {
+      if(this.mapping[index]["mappings"][type]["properties"][k]["type"]){
+        var tt = this.mapping[index]["mappings"][type]["properties"][k]["type"];
+        if(this.mapping[index]["mappings"][type]["properties"][k]["type"] == 'double'){
+          tt = 'number';
+        }
+
+
+      }
+      return (
+            <EuiFormRow key={k} label={k} helpText={tt}>
+              <EuiFieldText name={k} onChange={this.handleInput.bind(this)} type={tt}/>
+            </EuiFormRow>
+      );
+    }
+);
+
+    let modal;
+    if (this.state.isModalVisible) {
+      modal = (
+        <EuiOverlayMask>
+          <EuiModal
+            onClose={this.closeModal}
+            style={{ width: '800px',height:'850px',overflowY:'auto' }}
+          >
+            <EuiModalHeader>
+              <EuiModalHeaderTitle >
+              <EuiTitle size="l">
+                <h1 style={{ color: '#025471', fontWeight: '900', padding:'10px'}}>Add Document</h1>
+              </EuiTitle>
+              </EuiModalHeaderTitle>
+            </EuiModalHeader>
+
+            <EuiModalBody>
+            <EuiForm>
+              {formSample}
+            </EuiForm>
+            </EuiModalBody>
+
+            <EuiModalFooter>
+              <EuiButtonEmpty
+                onClick={this.closeModal}
+              >
+                Cancel
+              </EuiButtonEmpty>
+
+              <EuiButton
+                onClick={this.addDocument}
+                fill
+              >
+                Save
+              </EuiButton>
+            </EuiModalFooter>
+          </EuiModal>
+        </EuiOverlayMask>
+      );
+    }
+
     return (
       <div>
         <EuiHeader>
           <EuiHeaderSection>
-            <EuiHeaderSectionItem border="right"
-            >
+            <EuiHeaderSectionItem border="right">
             <EuiLink
               href="#/"
               onClick={(e) => {
                 this.setState({
                   isPortalVisible:false
                 });
-                //this.componentWillUnmount();
+                ReactDOM.unmountComponentAtNode(ReactDOM.findDOMNode(this).parentNode);
               }}
             >
               <FontAwesome
@@ -1037,11 +1319,21 @@ export default class extends Component {
 
             />
             <EuiTitle size="l">
-              <h1 style={{ color: '#025471', fontWeight: '900', padding:'10px'}}>Index labeling</h1>
+              <h1 style={{ color: '#025471', fontWeight: '900', padding:'10px'}}>Doc Editor</h1>
             </EuiTitle>
+
+          </EuiHeaderSection>
+          <EuiHeaderSection side="right">
+              <EuiFlexItem grow={false}>
+                <EuiButton fill /*onClick={this.addValueLabel}*/ iconSide="left"
+                iconType="indexOpen"
+                onClick={this.showModal}
+                style={{ width: '147px',marginTop: '8px', backgroundColor: '#005472'}}>Add document</EuiButton>
+                <EuiSpacer size="s" />
+                {modal}
+              </EuiFlexItem>
           </EuiHeaderSection>
         </EuiHeader>
-
         {optionalActionButtons}
         {empty}
         <EuiFlexGroup gutterSize="m">
@@ -1062,10 +1354,7 @@ export default class extends Component {
           <EuiTableHeader>
             {this.renderHeaderCells()}
           </EuiTableHeader>
-
-          <EuiTableBody>
             {this.renderRows()}
-          </EuiTableBody>
         </EuiTable>
 
         <EuiSpacer size="m" />

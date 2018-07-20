@@ -142,4 +142,42 @@ export default function (server) {
           }
       });
 
+      //Add document
+      server.route({
+            path: '/api/label/{index}/{type}/',
+            method: 'POST',
+            handler(req, reply) {
+                call(req, 'index', {
+                    index: req.params.index,
+                    type: req.params.type,
+                    body: req.payload
+                })
+                .then(function (err, response) {
+                    if(err)
+                        reply(err);
+                    else
+                        reply(response);
+                });
+            }
+        });
+
+        //Delete document
+        server.route({
+              path: '/api/label/{index}/{type}/{id}',
+              method: 'DELETE',
+              handler(req, reply) {
+                  call(req, 'delete', {
+                      index: req.params.index,
+                      type: req.params.type,
+                      id: req.params.id
+                  })
+                  .then(function (err, response) {
+                      if(err)
+                          reply(err);
+                      else
+                          reply(response);
+                  });
+              }
+          });
+
 };

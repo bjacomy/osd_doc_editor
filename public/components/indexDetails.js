@@ -119,15 +119,6 @@ export default class extends Component {
     this.toggleItem = this.toggleItem.bind(this);
   }
 
-  /*componentDidMount() {
-        setInterval(() => {
-            this.setState(() => {
-                //console.log('setting state');
-                return { unseen: "does not display" }
-            });
-        }, 1000);
-  }*/
-
   componentWillUnmount() {
     console.log('UNMOUNTED');
   }
@@ -418,7 +409,6 @@ export default class extends Component {
   }
 
   Search = (varS, from , itemPP) => {
-    //if(this.state.items.length != 0){
     var index = Object.keys(this.mapping)[0]
     var type = Object.keys(this.mapping[Object.keys(this.mapping)[0]]["mappings"])[0];
         var body = {};var query = {};var sort = [];
@@ -513,17 +503,13 @@ export default class extends Component {
                 itemIdToSelectedMap: Object.assign(newItemIdToSelectedMap, this.state.itemIdToSelectedMap),
               });
             }
-            //this.requestMapping(result.hits.total, result.hits.hits, from/itemPP, itemPP );
             setTimeout(function() { this.requestMapping(result.hits.total, result.hits.hits, from/itemPP, itemPP ) }.bind(this), 1000);
-
-
           }
         },
         (error) => {
 
         }
       )
-    //}
   }
 
   showModalValue= () => {
@@ -690,16 +676,6 @@ export default class extends Component {
 
   indexField(){
     var tab = [];
-    if(this.state.items.length != 0){
-    for (var v in Object.keys(this.state.items[0])) {
-      if((! Object.keys(this.state.items[0])[v].startsWith("_"))&&(! Object.keys(this.state.items[0])[v].startsWith("$"))&&( ! Object.keys(this.state.items[0])[v].startsWith("sort"))) {
-        tab.push(Object.keys(this.state.items[0])[v])
-        this.bodyAdd[Object.keys(this.state.items[0])[v]] = '';
-      }
-    }
-    console.log(this.mapping);
-    return tab;
-  }else {
     var index = Object.keys(this.mapping)[0]
     var type = Object.keys(this.mapping[Object.keys(this.mapping)[0]]["mappings"])[0];
     for (var v in Object.keys(this.mapping[index]["mappings"][type]["properties"])) {
@@ -709,7 +685,7 @@ export default class extends Component {
       }
     }
     return tab;
-  }
+
   }
 
   handleInput(event){
@@ -738,10 +714,8 @@ export default class extends Component {
               items: [],
             });
             setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
-
         } else {
-          var exempleTimeout = setTimeout(this.Search(this.state.searchValue, 0 * this.state.itemsPerPage, this.state.itemsPerPage), 500);
-
+          var exempleTimeout = setTimeout(this.Search(this.state.searchValue, 0 * this.state.itemsPerPage, this.state.itemsPerPage), 2000);
         }
       }else {
         setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
@@ -755,7 +729,6 @@ export default class extends Component {
   }
 
   addDocument = () => {
-    //if(this.state.items.length != 0){
     var index = Object.keys(this.mapping)[0]
     var type = Object.keys(this.mapping[Object.keys(this.mapping)[0]]["mappings"])[0];
     fetch("../api/label/"+index+"/"+type+"/", {
@@ -776,7 +749,6 @@ export default class extends Component {
         }
       )
       this.closeModal();
-  //  }
   }
 
   handleInputEdit(event){
@@ -1060,27 +1032,24 @@ export default class extends Component {
 
     if (this.state.isPortalVisible == true && this.state.checkAllDoc == false) {
       portal = (
-        <EuiPortal>
-          <EuiBottomBar>
-          <p align="center">
-            The documents on this page are selected. {(
+        <div style={{display: 'block',marginLeft: '28%', marginRight: 'auto',padding: '15px',marginTop: '-45px'}}>
+          <p style={{fontWeight: 'bold'}}>
+            The {(this.state.items.length)} documents on this page are selected. {(
               <EuiLink
                 onClick={this.checkAllDocs}
               >
-                Select all documents?
+                Select all the {(this.total)} documents?
               </EuiLink>
             )}
           </p>
-          </EuiBottomBar>
-        </EuiPortal>
+        </div>
       );
     }
     if (this.state.isPortalVisible == true && this.state.checkAllDoc == true && this.state.itemsAreTrue)  {
       portal = (
-        <EuiPortal>
-          <EuiBottomBar>
-          <p align="center">
-            All documents are selected. {(
+        <div style={{display: 'block',marginLeft: '33%', marginRight: 'auto',padding: '15px',marginTop: '-45px'}}>
+          <p style={{fontWeight: 'bold'}}>
+            All the {(this.total)} documents are selected. {(
               <EuiLink
                 onClick={this.checkAllDocs}
               >
@@ -1088,15 +1057,13 @@ export default class extends Component {
               </EuiLink>
             )}
           </p>
-          </EuiBottomBar>
-        </EuiPortal>
+        </div>
       );
     }
     if (this.state.isPortalVisible == true && this.state.checkAllDoc == true && ! this.state.itemsAreTrue)  {
       portal = (
-        <EuiPortal>
-          <EuiBottomBar>
-          <p align="center">
+        <div style={{display: 'block',marginLeft: '27%', marginRight: 'auto',padding: '15px',marginTop: '-45px'}}>
+          <p style={{fontWeight: 'bold'}}>
             All documents are selected except those you have unchecked. {(
               <EuiLink
                 onClick={this.checkAllDocs}
@@ -1105,8 +1072,7 @@ export default class extends Component {
               </EuiLink>
             )}
           </p>
-          </EuiBottomBar>
-        </EuiPortal>
+        </div>
       );
     }
 
@@ -1335,7 +1301,7 @@ export default class extends Component {
           </EuiHeaderSection>
         </EuiHeader>
         {optionalActionButtons}
-        {empty}
+        {empty}{portal}
         <EuiFlexGroup gutterSize="m">
           <EuiFlexItem>
             <EuiFieldSearch fullWidth onChange={this.mySearchHandle.bind(this)} placeholder="Search..." />
@@ -1370,7 +1336,7 @@ export default class extends Component {
         {optionalActionButtons}
 
         <br/><br/><br/><br/>
-        {portal}
+
       </div>
     );
   }

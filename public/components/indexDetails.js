@@ -3,10 +3,10 @@ import React, {
   Fragment,
 } from 'react';
 import FontAwesome from 'react-fontawesome';
+import Portal from './portal.js';
+import Heads from './header.js';
 import ReactDOM from 'react-dom';
 import {
-  EuiBadge,
-  EuiHealth,
   EuiButton,
   EuiButtonIcon,
   EuiCheckbox,
@@ -38,40 +38,25 @@ import {
   EuiModalHeader,
   EuiModalHeaderTitle,
   EuiOverlayMask,
-  EuiRange,
-  EuiSwitch,
   EuiSelect,
   EuiText,
   EuiTextColor,
   EuiTitle,
-  EuiPortal,
-  EuiBottomBar,
   EuiHeader,
-  EuiHeaderBreadcrumbs,
   EuiHeaderSection,
   EuiHeaderSectionItem,
   EuiHeaderSectionItemButton,
   EuiHeaderLogo,
-  makeId,
   LEFT_ALIGNMENT,
   RIGHT_ALIGNMENT,
   Pager,
-  SortableProperties,
   EuiPopoverTitle,
   EuiDescriptionList,
-  EuiComboBox,
 } from '@elastic/eui';
 
 export default class extends Component {
   constructor(props) {
     super(props);
-
-    this.columnsType = [
-      { value: 'choose type', text: 'choose type' , "disabled" : true },
-      { value: 'text', text: 'text' },
-      { value: 'double', text: 'double' },
-      { value: 'boolean', text: 'boolean' },
-    ];
 
     this.state = {
       itemIdToSelectedMap: {},
@@ -81,7 +66,6 @@ export default class extends Component {
       isModalValueVisible: false,
       isModalVisible: false,
       inputValue: '',
-      inputLabel: '',
       columns:[],
       items: this.props.names,
       value: '',
@@ -92,12 +76,11 @@ export default class extends Component {
       checkAllPageIndex:'',
       currentPageIndex:0,
       itemIdToExpandedRowMap: {},
+      total:this.props.total
     };
 
-    this.items =  this.props.names;
     this.columnsProp = this.props.colonne;
     this.searchTab = this.props.recherche;
-    this.total = this.props.total;
     this.mapping = this.props.mapping;
     this.state.columns =this.columnList();
     this.bodyAdd = {};
@@ -105,24 +88,24 @@ export default class extends Component {
     this.indexFd = this.indexField();
     this.selectedFieldValues = [];
 
-    this.pager = new Pager(this.total, this.state.itemsPerPage);
+    this.pager = new Pager(this.state.total, this.state.itemsPerPage);
     this.state.firstItemIndex = this.pager.getFirstItemIndex();
     this.state.lastItemIndex = this.pager.getLastItemIndex();
     this.closeModalValue = this.closeModalValue.bind(this);
     this.showModalValue = this.showModalValue.bind(this);
-    this.closeModal = this.closeModal.bind(this);
-    this.showModal = this.showModal.bind(this);
     this.columnList = this.columnList.bind(this);
     this.mySearch = this.mySearch.bind(this);
     this.togglePortal = this.togglePortal.bind(this);
     this.areAllItemsSelected = this.areAllItemsSelected.bind(this);
     this.toggleItem = this.toggleItem.bind(this);
+    this.handleInput = this.handleInput.bind(this);
   }
 
   componentWillUnmount() {
     console.log('UNMOUNTED');
   }
 
+//function that handles portal visibility
   togglePortal(allSelected,selectedI) {
     if(allSelected && ! this.state.checkAllDoc){
       this.setState({isPortalVisible: false,
@@ -167,6 +150,7 @@ export default class extends Component {
     }
   }
 
+//function that handles the check of all document
   checkAllDocs = () => {
     if (this.state.checkAllDoc==true) {
       this.setState({ checkAllDoc: !this.state.checkAllDoc,
@@ -174,12 +158,11 @@ export default class extends Component {
                       isPortalVisible: !this.state.isPortalVisible
                     });
     }else {
-      this.setState({ checkAllDoc: !this.state.checkAllDoc,
-
-                    });
+      this.setState({ checkAllDoc: !this.state.checkAllDoc});
     }
   }
 
+//function that get the selected field after onch event
   onChangeSelect = e => {
     this.selectedFieldValues = [];
     this.setState({
@@ -215,15 +198,18 @@ export default class extends Component {
       )
   }
 
+//function that add value of the selected field for one or many documents
   addValueLabel= () => {
     let index = this.state.items[0]._index;
     let type = this.state.items[0]._type;
+    let script = {};
+    let query = {};
+    let query_string = {};
+    let body = {};
+    let secondBody = {};
     if (this.state.checkAllDoc == false) {
-      let secondBody = {};
       secondBody[this.state.value] = this.state.inputValue;
-      let body = {
-        "doc": secondBody
-      };
+      body = {"doc": secondBody};
       for (var property1 in this.state.itemIdToSelectedMap) {
         if(this.state.itemIdToSelectedMap[property1]){
         fetch("../api/label/"+index+"/"+type+"/"+property1+"/_update", {
@@ -240,27 +226,22 @@ export default class extends Component {
               setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
             },
             (error) => {
-
             }
-        )
+          )
         }
       }
     }
-    if (this.state.checkAllDoc == true && this .state.itemsAreTrue == false) {
-        let script = {};
-        let query = {};
-        let query_string = {};
-        let body = {};
+    if (this.state.checkAllDoc == true && this.state.itemsAreTrue == false) {
         if(this.state.searchValue !='')
-        { query_string["query"] = this.state.searchValue;
-          for (var property1 in this.state.itemIdToSelectedMap) {
-            if(! this.state.itemIdToSelectedMap[property1]){
-              query_string["query"] += " NOT _id:"+property1
+        {   query_string["query"] = this.state.searchValue;
+            for (var property1 in this.state.itemIdToSelectedMap) {
+              if(! this.state.itemIdToSelectedMap[property1]){
+                query_string["query"] += " NOT _id:"+property1
+              }
             }
-          }
-          query["query_string"] = query_string;
+            query["query_string"] = query_string;
         }else{
-          query["match_all"] = {}
+            query["match_all"] = {}
         }
         script["source"] = "ctx._source."+this.state.value+" = '"+this.state.inputValue+"'";
         script["lang"] = "painless";
@@ -280,46 +261,41 @@ export default class extends Component {
             (result) => {
                 setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);          },
             (error) => {
-
             }
-        )
+          )
     }
-    if (this.state.checkAllDoc == true && this .state.itemsAreTrue == true) {
-      let script = {};
-      let query = {};
-      let query_string = {};
-      let body = {};
-      if(this.state.searchValue !='')
-      { query_string["query"] = this.state.searchValue;
-        query["query_string"] = query_string;
-      }else{
-        query["match_all"] = {}
-      }
-      script["source"] = "ctx._source."+this.state.value+" = '"+this.state.inputValue+"'";
-      script["lang"] = "painless";
-      body["script"] = script;
-      body["query"] = query;
+    if (this.state.checkAllDoc == true && this.state.itemsAreTrue == true) {
+        if(this.state.searchValue !='')
+        {   query_string["query"] = this.state.searchValue;
+            query["query_string"] = query_string;
+        }else{
+            query["match_all"] = {}
+        }
+        script["source"] = "ctx._source."+this.state.value+" = '"+this.state.inputValue+"'";
+        script["lang"] = "painless";
+        body["script"] = script;
+        body["query"] = query;
 
-      fetch("../api/label/"+index+"/_update_by_query", {
-          method: 'post',
-          headers: {
-            'Content-Type': 'application/json',
-            'kbn-xsrf': 'reporting'
-          },
-          body: JSON.stringify(body)
-        })
-        .then(res => res.json())
-        .then(
-          (result) => {
-              setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);          },
-          (error) => {
-
-          }
-      )
+        fetch("../api/label/"+index+"/_update_by_query", {
+            method: 'post',
+            headers: {
+              'Content-Type': 'application/json',
+              'kbn-xsrf': 'reporting'
+            },
+            body: JSON.stringify(body)
+          })
+          .then(res => res.json())
+          .then(
+            (result) => {
+                setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);          },
+            (error) => {
+            }
+          )
     }
     this.closeModalValue();
   }
 
+//function that update the view
   requestMapping= (total, newItems, pageIndex, itemPPage) => {
     let index = this.state.items[0]._index;
     let type = this.state.items[0]._type;
@@ -373,13 +349,14 @@ export default class extends Component {
           )
   }
 
-
+//function that get the input value of the field value textfield
   handleValue(event){
     this.setState({
       inputValue: event.target.value
     })
   }
 
+//function that get the input value of search
   mySearchHandle(event){
     this.setState({
       searchValue: event.target.value,
@@ -400,6 +377,7 @@ export default class extends Component {
     this.selectedFieldValues =  []
   }
 
+//function that call the search function
   mySearch= () => {
       this.setState({ itemIdToSelectedMap: {},
                     isPortalVisible:false,
@@ -408,6 +386,7 @@ export default class extends Component {
       var exempleTimeout = setTimeout(this.Search(this.state.searchValue, 0, this.state.itemsPerPage), 100);
   }
 
+//function that make the search
   Search = (varS, from , itemPP) => {
     var index = Object.keys(this.mapping)[0]
     var type = Object.keys(this.mapping[Object.keys(this.mapping)[0]]["mappings"])[0];
@@ -487,12 +466,14 @@ export default class extends Component {
               this.setState({
                 items: result.hits.hits,
                 lastItemIndex: (result.hits.total % itemPP) - 1,
+                total:result.hits.total
               });
             }else {
               this.setState({
                 firstItemIndex: this.pager.getFirstItemIndex(),
                 lastItemIndex: this.pager.getLastItemIndex(),
                 items: result.hits.hits,
+                total:result.hits.total
               });
             }
             if(this.state.checkAllDoc){
@@ -516,6 +497,7 @@ export default class extends Component {
     this.setState({ isModalValueVisible: true });
   }
 
+//function that create the list of column
   columnList= () => {
     let tab = [];
     let selectTab = [];
@@ -594,6 +576,7 @@ export default class extends Component {
 
   }
 
+//function that handles the check of all checkboxes
   toggleAll = () => {
     const allSelected = this.areAllItemsSelected();
     const newItemIdToSelectedMap = {};
@@ -660,34 +643,23 @@ export default class extends Component {
     return this.state.itemIdToOpenActionsPopoverMap[itemId];
   };
 
-  closeModal() {
-    this.setState({ isModalVisible: false });
-  }
-
-  showModal() {
-    this.setState({ isModalVisible: true });
-  }
-
-  handle(event){
-    this.setState({
-      inputLabel: event.target.value
-    })
-  }
-
+//function that get the fields of the index
   indexField(){
     var tab = [];
     var index = Object.keys(this.mapping)[0]
     var type = Object.keys(this.mapping[Object.keys(this.mapping)[0]]["mappings"])[0];
     for (var v in Object.keys(this.mapping[index]["mappings"][type]["properties"])) {
-      if((! Object.keys(this.mapping[index]["mappings"][type]["properties"])[v].startsWith("_"))&&(! Object.keys(this.mapping[index]["mappings"][type]["properties"])[v].startsWith("$"))&&( ! Object.keys(this.mapping[index]["mappings"][type]["properties"])[v].startsWith("sort"))) {
-        tab.push(Object.keys(this.mapping[index]["mappings"][type]["properties"])[v])
-        this.bodyAdd[Object.keys(this.mapping[index]["mappings"][type]["properties"])[v]] = '';
+      if(this.mapping[index]["mappings"][type]["properties"][Object.keys(this.mapping[index]["mappings"][type]["properties"])[v]]["type"]){
+        if((! Object.keys(this.mapping[index]["mappings"][type]["properties"])[v].startsWith("_"))&&(! Object.keys(this.mapping[index]["mappings"][type]["properties"])[v].startsWith("$"))&&( ! Object.keys(this.mapping[index]["mappings"][type]["properties"])[v].startsWith("sort"))) {
+          tab.push(Object.keys(this.mapping[index]["mappings"][type]["properties"])[v])
+          this.bodyAdd[Object.keys(this.mapping[index]["mappings"][type]["properties"])[v]] = '';
+        }
       }
     }
     return tab;
-
   }
 
+//function that get the input value textfield of add Document interface
   handleInput(event){
     this.bodyAdd[event.target.name] = event.target.value;
   }
@@ -707,7 +679,7 @@ export default class extends Component {
     .then(
     (result) => {
       if(this.state.items.length == 1){
-        if (this.total <= 1) {
+        if (this.state.total <= 1) {
           this.pager = new Pager(0 , this.state.itemsPerPage);
 
             this.setState({
@@ -722,7 +694,6 @@ export default class extends Component {
       }
     },
     (error) => {
-
     }
   )
   }
@@ -745,12 +716,11 @@ export default class extends Component {
           setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
         },
         (error) => {
-
         }
       )
-      this.closeModal();
   }
 
+//function that get the input value textfield of edit Document interface
   handleInputEdit(event){
     this.bodyEdit[event.target.name] = event.target.value;
   }
@@ -775,11 +745,11 @@ export default class extends Component {
               setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
             },
             (error) => {
-
             }
         )}
   }
 
+//function that show document details
   toggleDetails = (item) => {
     const itemIdToExpandedRowMap = { ...this.state.itemIdToExpandedRowMap };
     if (itemIdToExpandedRowMap[item._id]) {
@@ -797,10 +767,7 @@ export default class extends Component {
     return this.state.columns.map((column, columnIndex) => {
       if (column.isCheckbox) {
         return (
-          <EuiTableHeaderCellCheckbox
-            key={column.id}
-            width={column.width}
-          >
+          <EuiTableHeaderCellCheckbox key={column.id} width={column.width}>
             <EuiCheckbox
               id="selectAllCheckbox"
               checked={this.areAllItemsSelected()}
@@ -844,13 +811,10 @@ export default class extends Component {
               return (
                 <div key={key}>
                         <EuiFormRow key={k} label={k} style={{ marginLeft: '80px' }}>
-
                           <EuiFieldText name={key} onChange={this.handleInputEdit.bind(this)} defaultValue={val+''}/>
-
                         </EuiFormRow>
                     <EuiSpacer size="xs" />
                 </div>
-
               );
             }}
             );
@@ -861,14 +825,15 @@ export default class extends Component {
                 val = item[k];
 
               return (
-                <div key={key}> <span style={{ background: '#D9D9D9' }}>
+                <div key={key}>
+                    <span style={{ background: '#D9D9D9' }}>
                       <EuiTextColor>
                         {key}
                       </EuiTextColor>
-                    </span>    <EuiTextColor color="default">{val}</EuiTextColor>
+                    </span>
+                    <EuiTextColor color="default">{val}</EuiTextColor>
                     <EuiSpacer size="s" />
                 </div>
-
               );
             }}
             );
@@ -912,11 +877,7 @@ export default class extends Component {
 
         if (column.isActionsPopover) {
           return (
-            <EuiTableRowCell
-              key={column.id}
-              textOnly={false}
-              align="right"
-            >
+            <EuiTableRowCell key={column.id} textOnly={false} align="right">
               <EuiPopover
                 id={`${item._id}-actions`}
                 ownFocus
@@ -953,21 +914,13 @@ export default class extends Component {
 
               <EuiPopoverTitle style={{ width: '820px',height: '440px', padding: '20px',backgroundColor: '#ffffff',border: '3px solid #005472',overflowY:'auto'}}>
                 <EuiTitle size="m">
-                  <h1 style={{ color: '#005472', fontWeight: '900', textAlign:'center', paddingBottom:'40px'}}>INDEX DETAILS</h1>
+                  <h1 style={{ color: '#005472', fontWeight: '900', textAlign:'center', paddingBottom:'40px'}}>DOCUMENT DETAILS</h1>
                 </EuiTitle>
                 {keyValue}
-
-                <EuiButtonEmpty
-                  onClick={() => this.closePopover(item._id)}
-                  style={{float:'right',position: 'fixed',right: '165px',bottom: '15px'}}
-                >
+                <EuiButtonEmpty onClick={() => this.closePopover(item._id)} style={{float:'right',position: 'fixed',right: '165px',bottom: '15px'}}>
                   Cancel
                 </EuiButtonEmpty>
-                <EuiButton
-                  onClick={() => this.editDoc(item._id)}
-                  fill
-                  style={{float:'right',position: 'fixed',right: '30px',bottom: '15px'}}
-                >
+                <EuiButton onClick={() => this.editDoc(item._id)} fill style={{float:'right',position: 'fixed',right: '30px',bottom: '15px'}}>
                   Save
                 </EuiButton>
               </EuiPopoverTitle>
@@ -984,12 +937,7 @@ export default class extends Component {
         }
 
         return (
-          <EuiTableRowCell
-            key={column.id}
-            align={column.alignment}
-            //truncateText={cell && cell.truncateText}
-            textOnly={cell ? cell.textOnly : true}
-          >
+          <EuiTableRowCell key={column.id} align={column.alignment} textOnly={cell ? cell.textOnly : true}>
             {child}
           </EuiTableRowCell>
         );
@@ -997,16 +945,10 @@ export default class extends Component {
 
       return (
         <EuiTableBody key={item._id+'-'} style={{ display:'contents'}}>
-        <EuiTableRow
-          key={item._id}
-          isSelected={this.isItemSelected(item._id)}
-
-        >
+        <EuiTableRow key={item._id} isSelected={this.isItemSelected(item._id)}>
           {cells}
         </EuiTableRow>
-        <EuiTableRow
-          key={item._id+'_'}
-          isSelected={this.isItemSelected(item._id)}
+        <EuiTableRow key={item._id+'_'} isSelected={this.isItemSelected(item._id)}
           style={{ display: this.state.itemIdToExpandedRowMap[item._id] ? 'contents' : 'none'}}
         >
         <td style={{ backgroundColor: '#fbfbfb'}}></td>
@@ -1028,56 +970,7 @@ export default class extends Component {
   }
 
   render() {
-    let portal;
-
-    if (this.state.isPortalVisible == true && this.state.checkAllDoc == false) {
-      portal = (
-        <div style={{display: 'block',marginLeft: '28%', marginRight: 'auto',padding: '15px',marginTop: '-45px'}}>
-          <p style={{fontWeight: 'bold'}}>
-            The {(this.state.items.length)} documents on this page are selected. {(
-              <EuiLink
-                onClick={this.checkAllDocs}
-              >
-                Select all the {(this.total)} documents?
-              </EuiLink>
-            )}
-          </p>
-        </div>
-      );
-    }
-    if (this.state.isPortalVisible == true && this.state.checkAllDoc == true && this.state.itemsAreTrue)  {
-      portal = (
-        <div style={{display: 'block',marginLeft: '33%', marginRight: 'auto',padding: '15px',marginTop: '-45px'}}>
-          <p style={{fontWeight: 'bold'}}>
-            All the {(this.total)} documents are selected. {(
-              <EuiLink
-                onClick={this.checkAllDocs}
-              >
-                cancel the selection?
-              </EuiLink>
-            )}
-          </p>
-        </div>
-      );
-    }
-    if (this.state.isPortalVisible == true && this.state.checkAllDoc == true && ! this.state.itemsAreTrue)  {
-      portal = (
-        <div style={{display: 'block',marginLeft: '27%', marginRight: 'auto',padding: '15px',marginTop: '-45px'}}>
-          <p style={{fontWeight: 'bold'}}>
-            All documents are selected except those you have unchecked. {(
-              <EuiLink
-                onClick={this.checkAllDocs}
-              >
-                cancel the selection?
-              </EuiLink>
-            )}
-          </p>
-        </div>
-      );
-    }
-
     let optionalActionButtons;
-
     const formS = this.selectedFieldValues.map(k => {
       return (
           <option key={k} value={k}/>
@@ -1085,55 +978,22 @@ export default class extends Component {
     }
     );
 
-
-    let empty;
-    if(this.state.items.length == 0){
-      empty = (
-        <div style={{display: 'block',marginLeft: '40%', marginRight: 'auto'}}>
-        <FontAwesome
-        className='fas fa-exclamation-triangle'
-        name='fas fa-exclamation-triangle'
-        size='2x'
-        style={{ color: '#0079a5',height: '40px'}}
-        />
-        <EuiTitle size="m">
-          <h1 style={{ color: '#0079a5', fontWeight: '900', padding:'10px', marginTop: '-50px', marginLeft:'25px'}}>Empty Index</h1>
-        </EuiTitle>
-        </div>
-      );
-    }
-
     let saveB;
     if (this.state.value !='') {
       saveB = (
-      <EuiButton
-        onClick={this.addValueLabel}
-        fill
-      >
-        Save
-      </EuiButton>
+      <EuiButton onClick={this.addValueLabel} fill>Save</EuiButton>
     );
     }else {
       saveB = (
-      <EuiButton
-        onClick={this.addValueLabel}
-        fill
-        isDisabled
-      >
-        Save
-      </EuiButton>
+      <EuiButton onClick={this.addValueLabel} fill isDisabled>Save</EuiButton>
     );
     }
 
     let modalValue;
-
     if (this.state.isModalValueVisible) {
       modalValue = (
         <EuiOverlayMask>
-          <EuiModal
-            onClose={this.closeModalValue}
-            style={{ width: '800px' }}
-          >
+          <EuiModal onClose={this.closeModalValue} style={{ width: '800px' }}>
             <EuiModalHeader>
               <EuiModalHeaderTitle >
                 Add a value to this field
@@ -1143,9 +1003,7 @@ export default class extends Component {
             ( All aggregatable fields are autocompleted. )
             <EuiModalBody>
               <Fragment>
-                <EuiFormRow
-                  label="Field name"
-                >
+                <EuiFormRow label="Field name">
                   <EuiSelect
                     options={this.columnsProp}
                     defaultValue={this.columnsProp[0].value}
@@ -1160,14 +1018,10 @@ export default class extends Component {
                 </datalist>
           </Fragment>
             </EuiModalBody>
-
             <EuiModalFooter>
-              <EuiButtonEmpty
-                onClick={this.closeModalValue}
-              >
+              <EuiButtonEmpty onClick={this.closeModalValue}>
                 Cancel
               </EuiButtonEmpty>
-
               {saveB}
             </EuiModalFooter>
           </EuiModal>
@@ -1195,113 +1049,12 @@ export default class extends Component {
       );
     }
 
-    const formSample = this.indexFd.map(k => {
-      var index = Object.keys(this.mapping)[0]
-      var type = Object.keys(this.mapping[Object.keys(this.mapping)[0]]["mappings"])[0];
-      //for (var v in Object.keys(this.mapping[index]["mappings"][type]["properties"])) {
-      if(this.mapping[index]["mappings"][type]["properties"][k]["type"]){
-        var tt = this.mapping[index]["mappings"][type]["properties"][k]["type"];
-        if(this.mapping[index]["mappings"][type]["properties"][k]["type"] == 'double'){
-          tt = 'number';
-        }
-
-
-      }
-      return (
-            <EuiFormRow key={k} label={k} helpText={tt}>
-              <EuiFieldText name={k} onChange={this.handleInput.bind(this)} type={tt}/>
-            </EuiFormRow>
-      );
-    }
-);
-
-    let modal;
-    if (this.state.isModalVisible) {
-      modal = (
-        <EuiOverlayMask>
-          <EuiModal
-            onClose={this.closeModal}
-            style={{ width: '800px',height:'850px',overflowY:'auto' }}
-          >
-            <EuiModalHeader>
-              <EuiModalHeaderTitle >
-              <EuiTitle size="l">
-                <h1 style={{ color: '#025471', fontWeight: '900', padding:'10px'}}>Add Document</h1>
-              </EuiTitle>
-              </EuiModalHeaderTitle>
-            </EuiModalHeader>
-
-            <EuiModalBody>
-            <EuiForm>
-              {formSample}
-            </EuiForm>
-            </EuiModalBody>
-
-            <EuiModalFooter>
-              <EuiButtonEmpty
-                onClick={this.closeModal}
-              >
-                Cancel
-              </EuiButtonEmpty>
-
-              <EuiButton
-                onClick={this.addDocument}
-                fill
-              >
-                Save
-              </EuiButton>
-            </EuiModalFooter>
-          </EuiModal>
-        </EuiOverlayMask>
-      );
-    }
-
     return (
       <div>
-        <EuiHeader>
-          <EuiHeaderSection>
-            <EuiHeaderSectionItem border="right">
-            <EuiLink
-              href="#/"
-              onClick={(e) => {
-                this.setState({
-                  isPortalVisible:false
-                });
-                ReactDOM.unmountComponentAtNode(ReactDOM.findDOMNode(this).parentNode);
-              }}
-            >
-              <FontAwesome
-              className='far fa-arrow-circle-left'
-              name='far fa-arrow-circle-left'
-              size='3x'
-              style={{ color: '#025471', paddingLeft: '15px', marginTop: '5px' ,width: '70px'}}/>
-            </EuiLink>
-            </EuiHeaderSectionItem>
-            <EuiHeaderLogo
-              aria-label="Actions"
-              iconType="indexOpen"
-              size='xxl'
-              style={{ color: '#025471', paddingLeft: '27px', marginTop: '-8px' ,width: '60px'}}
-
-            />
-            <EuiTitle size="l">
-              <h1 style={{ color: '#025471', fontWeight: '900', padding:'10px'}}>Doc Editor</h1>
-            </EuiTitle>
-
-          </EuiHeaderSection>
-          <EuiHeaderSection side="right">
-              <EuiFlexItem grow={false}>
-                <EuiButton fill /*onClick={this.addValueLabel}*/ iconSide="left"
-                iconType="indexOpen"
-                onClick={this.showModal}
-                style={{ width: '147px',marginTop: '8px', backgroundColor: '#005472'}}>Add document</EuiButton>
-                <EuiSpacer size="s" />
-                {modal}
-              </EuiFlexItem>
-          </EuiHeaderSection>
-        </EuiHeader>
+        <Heads addDocMethod={this.addDocument} handleInput={this.handleInput} showModal={this.showModal} closeModal={this.closeModal} indexFd={this.indexFd} mapping={this.mapping} mVisible={this.state.isModalVisible} pVisible={this.state.isPortalVisible}/>
         {optionalActionButtons}
-        {empty}{portal}
+
+        <Portal tabItems={this.state.items.length} total={this.state.total} visible={this.state.isPortalVisible} checkAllDoc={this.state.checkAllDoc} itemsAreTrue={this.state.itemsAreTrue} checkAllDocs={this.checkAllDocs}/>
         <EuiFlexGroup gutterSize="m">
           <EuiFlexItem>
             <EuiFieldSearch fullWidth onChange={this.mySearchHandle.bind(this)} placeholder="Search..." />
@@ -1309,7 +1062,7 @@ export default class extends Component {
           <EuiFlexItem grow={false}>
           <div>
             <EuiButton onClick={this.mySearch}>
-          Search
+              Search
             </EuiButton>
           </div>
           </EuiFlexItem>
@@ -1334,9 +1087,7 @@ export default class extends Component {
           onChangePage={this.onChangePage.bind(this)}
         />
         {optionalActionButtons}
-
-        <br/><br/><br/><br/>
-
+        <EuiSpacer size="xl" />
       </div>
     );
   }

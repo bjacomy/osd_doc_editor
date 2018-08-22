@@ -1,8 +1,10 @@
-# label
+# Doc Editor
 
-> An awesome Kibana plugin
+> Doc Editor plugin for Kibana that edits documents (add, edit, delete, search, classification)
 
 ---
+## demo
+
 
 ## development
 

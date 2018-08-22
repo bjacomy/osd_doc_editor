@@ -5,7 +5,7 @@
 ---
 ## demo
 
-![Alt Text](https://code.search.orangeportails.net/metriks/kibana-plugins/doc-editor/demo/add-field-video-plugin.gif)
+![picture](https://code.search.orangeportails.net/metriks/kibana-plugins/doc-editor/demo/add-field-video-plugin.gif)
 
 ## development
 

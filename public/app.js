@@ -13,9 +13,6 @@ import IndexList from './components/indexList.js';
 import 'font-awesome/css/font-awesome.min.css';
 import 'fixed-data-table-2/dist/fixed-data-table.css';
 
-
-
-
 var column = [];
 
 
@@ -90,23 +87,6 @@ uiModules
       for (var v in  this.status.hits.hits) {
         for (var key in  this.mapping[this.index]["mappings"][type]["properties"]) {
           if(this.mapping[this.index]["mappings"][type]["properties"][key]["type"]){
-            /*for (var subkey in  this.mapping[this.index]["mappings"][type]["properties"][key]["properties"]) {
-              if(this.status.hits.hits[v]._source[key])
-              {
-                if(this.status.hits.hits[v]._source[key][subkey])
-                {
-                  this.status.hits.hits[v][key+"."+subkey]=this.status.hits.hits[v]._source[key][subkey];
-                }
-                else {
-                  this.status.hits.hits[v][key+"."+subkey]="";
-                }
-              }
-              else {
-                this.status.hits.hits[v][key+"."+subkey]="";
-              }
-            }
-          }
-          else {*/
             if(this.status.hits.hits[v]._source[key])
             {
               this.status.hits.hits[v][key]=this.status.hits.hits[v]._source[key];

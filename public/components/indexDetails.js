@@ -822,15 +822,15 @@ export default class extends Component {
 
             expRow = popkey.map(k => {
               if(k != "_source")
-              { key = k + ":";
+              { key = k + " : ";
                 val = item[k];
 
               return (
                 <div key={key}>
-                    <span style={{ background: '#D9D9D9' }}>
-                      <EuiTextColor>
+                    <span style={{ color: '#005472' }}>
+
                         {key}
-                      </EuiTextColor>
+
                     </span>
                     <EuiTextColor color="default">{val}</EuiTextColor>
                     <EuiSpacer size="s" />

@@ -43,6 +43,7 @@ export default class extends Component {
       { value: 'text', text: 'text' },
       { value: 'double', text: 'double' },
       { value: 'boolean', text: 'boolean' },
+      { value: 'date', text: 'date' }
     ];
 
     this.timerID = null;

@@ -3,6 +3,8 @@ import React, {
   Fragment,
 } from 'react';
 import FontAwesome from 'react-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCoffee } from '@fortawesome/free-solid-svg-icons'
 import ReactDOM from 'react-dom';
 import {
   EuiBadge,
@@ -172,21 +174,21 @@ export default class extends Component {
             }}
           >
             <FontAwesome
-            className='far fa-arrow-circle-left'
-            name='far fa-arrow-circle-left'
+            className='fas fa-arrow-circle-left'
+            name='fas fa-arrow-circle-left'
             size='3x'
-            style={{ color: '#025471', paddingLeft: '15px', marginTop: '5px' ,width: '70px'}}/>
+            style={{ color: '#025471', paddingLeft: '15px', marginTop: '10px' ,width: '70px'}}/>
           </EuiLink>
           </EuiHeaderSectionItem>
           <EuiHeaderLogo
             aria-label="Actions"
-            iconType="indexOpen"
+            iconType="indexEdit"
             size='xxl'
-            style={{ color: '#025471', paddingLeft: '27px', marginTop: '-8px' ,width: '60px'}}
+            style={{ color: '#025471', paddingLeft: '27px', marginTop: '-2px' ,width: '60px'}}
 
           />
           <EuiTitle size="l">
-            <h1 style={{ color: '#025471', fontWeight: '900', padding:'10px'}}>Doc Editor</h1>
+            <h1 style={{ color: '#025471', padding:'10px'}}>Doc Editor</h1>
           </EuiTitle>
 
         </EuiHeaderSection>

@@ -2,6 +2,7 @@ import React, {
   Component,
   Fragment,
 } from 'react';
+import "@elastic/eui/dist/eui_theme_k6_light.css";
 import FontAwesome from 'react-fontawesome';
 import Portal from './portal.js';
 import Heads from './header.js';
@@ -270,7 +271,7 @@ export default class extends Component {
             query["query_string"] = query_string;
         }else{
             query["match_all"] = {}
-        }
+        } // my\ field
         script["source"] = "ctx._source."+this.state.value+" = '"+this.state.inputValue+"'";
         script["lang"] = "painless";
         body["script"] = script;
@@ -886,7 +887,7 @@ export default class extends Component {
                     <EuiButtonIcon
                       aria-label="Actions"
                       iconType="pencil"
-                      style={{ width: '40px',height:'40px'}}
+                      style={{ width: '40px',height:'40px',marginLeft: '-100px'}}
                       onClick={() => this.togglePopover(item._id)}
                     />
                     <EuiButtonIcon
@@ -995,12 +996,12 @@ export default class extends Component {
         <EuiOverlayMask>
           <EuiModal onClose={this.closeModalValue} style={{ width: '800px' }}>
             <EuiModalHeader>
-              <EuiModalHeaderTitle >
+              <EuiModalHeaderTitle style={{ color: '#025471'}}>
                 Add a value to this field
               </EuiModalHeaderTitle>
             </EuiModalHeader>
             <EuiSpacer size="s" />
-            ( All aggregatable fields are autocompleted. )
+            <span style={{ marginLeft: '20px' }}> ( All aggregatable fields are autocompleted. )</span>
             <EuiModalBody>
               <Fragment>
                 <EuiFormRow label="Field name">
@@ -1011,7 +1012,7 @@ export default class extends Component {
                   />
                 </EuiFormRow>
                 <EuiSpacer size="m" />
-                <label>value</label><br></br>
+                <label style={{fontWeight: '600', fontSize: '13px'}}>Value</label><br></br><br></br>
                 <EuiFieldText list="val" type="text" id="choix_val" name="popValue" onChange={this.handleValue.bind(this)}/>
                 <datalist id="val">
                   {formS}
@@ -1035,7 +1036,7 @@ export default class extends Component {
           <EuiButton fill /*onClick={this.addValueLabel}*/ iconSide="left"
           iconType="indexEdit"
           onClick={this.showModalValue}
-          style={{ width: '145px',marginTop: '8px'}}>Edit field value</EuiButton>
+          style={{ width: '148px',marginTop: '8px'}}>Edit field value</EuiButton>
           <EuiSpacer size="s" />
           {modalValue}
         </EuiFlexItem>

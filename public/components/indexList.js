@@ -401,13 +401,13 @@ export default class extends Component {
             <EuiHeaderSectionItem border="right">
               <EuiHeaderLogo
                 aria-label="Actions"
-                iconType="indexOpen"
+                iconType="indexEdit"
                 size='xxl'
-                style={{ color: '#025471', paddingLeft: '15px', marginTop: '-6px' ,width: '60px'}}
+                style={{ color: '#025471', paddingLeft: '15px', marginTop: '-2px' ,width: '60px'}}
               />
             </EuiHeaderSectionItem>
             <EuiTitle size="l">
-              <h1 style={{ color: '#025471', fontWeight: '900', padding:'10px'}}>Doc Editor</h1>
+              <h1 style={{ color: '#025471', padding:'10px'}}>Doc Editor</h1>
             </EuiTitle>
           </EuiHeaderSection>
         </EuiHeader>
@@ -415,7 +415,7 @@ export default class extends Component {
         <EuiSpacer size="l" />
 
         <EuiTitle>
-          <h1 style={{ fontWeight: '700'}}>Elasticsearch indices</h1>
+          <h2 style={{ fontWeight: '600'}}>Elasticsearch indices</h2>
         </EuiTitle>
         <EuiSpacer size="l" />
         <EuiSelect

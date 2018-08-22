@@ -12,7 +12,7 @@ import Details from './components/indexDetails.js';
 import IndexList from './components/indexList.js';
 import 'font-awesome/css/font-awesome.min.css';
 import 'fixed-data-table-2/dist/fixed-data-table.css';
-import 'angular-translate';
+
 
 
 

@@ -12,9 +12,9 @@ export default function (kibana) {
         // An description of the application.
         description: 'An awesome Kibana plugin',
         // The require reference to the JavaScript file for this app
-        main: 'plugins/labeling-plugin/app',
+        main: 'plugins/doc-editor/app',
         // The require reference to the icon of the app
-        icon: 'plugins/labeling-plugin/news.png'
+        icon: 'plugins/doc-editor/edit.png'
       }
     },
 

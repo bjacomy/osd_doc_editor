@@ -5,7 +5,23 @@
 ---
 ## demo
 
+### add field to the index
+
 ![Alt Text](https://code.search.orangeportails.net/metriks/kibana-plugins/doc-editor/raw/master/demo/add-field-video-plugin.gif)
+
+### add document to the index
+
+![Alt Text](https://code.search.orangeportails.net/metriks/kibana-plugins/doc-editor/raw/master/demo/add-document-video-plugin.gif)
+
+### edit and delete document
+
+![Alt Text](https://code.search.orangeportails.net/metriks/kibana-plugins/doc-editor/raw/master/demo/edit-delete-document-video-plugin.gif)
+
+### search and classify documents
+
+![Alt Text](https://code.search.orangeportails.net/metriks/kibana-plugins/doc-editor/raw/master/demo/search-classify-document-video-plugin.gif)
+
+
 
 ## development
 

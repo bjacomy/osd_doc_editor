@@ -242,7 +242,13 @@ export default class extends Component {
             }
             query["query_string"] = query_string;
         }else{
-            query["match_all"] = {}
+            query_string["query"] = '_id:*';
+            for (var property1 in this.state.itemIdToSelectedMap) {
+              if(! this.state.itemIdToSelectedMap[property1]){
+                query_string["query"] += " NOT _id:"+property1
+              }
+            }
+            query["query_string"] = query_string;
         }
         script["source"] = "ctx._source."+this.state.value+" = '"+this.state.inputValue+"'";
         script["lang"] = "painless";
@@ -324,11 +330,19 @@ export default class extends Component {
 
               this.pager = new Pager(total , itemPPage);
               if(this.pager.totalPages - 1 == pageIndex){
-                this.setState({
-                  items: newItems,
-                  lastItemIndex: (total % itemPPage) - 1,
-                  currentPageIndex: this.pager.currentPageIndex
-                });
+                if(total != itemPPage){
+                  this.setState({
+                    items: newItems,
+                    lastItemIndex: (total % itemPPage) - 1,
+                    currentPageIndex: this.pager.currentPageIndex
+                  });
+                }else {
+                  this.setState({
+                    items: newItems,
+                    lastItemIndex: total - 1,
+                    currentPageIndex: this.pager.currentPageIndex
+                  });
+                }
               }else {
                 this.setState({
                   firstItemIndex: this.pager.getFirstItemIndex(),
@@ -464,11 +478,21 @@ export default class extends Component {
           if(result.hits.hits.length > 0){
             this.pager = new Pager(result.hits.total , itemPP);
             if(this.pager.totalPages - 1 == from/itemPP){
-              this.setState({
-                items: result.hits.hits,
-                lastItemIndex: (result.hits.total % itemPP) - 1,
-                total:result.hits.total
-              });
+              if (result.hits.total == itemPP) {
+                this.setState({
+                  items: result.hits.hits,
+                  firstItemIndex: 0,
+                  lastItemIndex: result.hits.total - 1,
+                  total:result.hits.total
+                });
+              }else {
+                this.setState({
+                  items: result.hits.hits,
+                  firstItemIndex: 0,
+                  lastItemIndex: (result.hits.total % itemPP) - 1,
+                  total:result.hits.total
+                });
+              }
             }else {
               this.setState({
                 firstItemIndex: this.pager.getFirstItemIndex(),
@@ -688,7 +712,8 @@ export default class extends Component {
             });
             setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
         } else {
-          var exempleTimeout = setTimeout(this.Search(this.state.searchValue, 0 * this.state.itemsPerPage, this.state.itemsPerPage), 2000);
+          this.setState({ total: this.state.total - 1});
+          setTimeout(function() { this.Search(this.state.searchValue, (this.pager.currentPageIndex - 1) * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
         }
       }else {
         setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
@@ -715,6 +740,7 @@ export default class extends Component {
       .then(
         (result) => {
           setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
+          this.bodyAdd = {};
         },
         (error) => {
         }
@@ -727,8 +753,9 @@ export default class extends Component {
   }
 
   editDoc(id){
-    if(this.state.items.length != 0){let index = this.state.items[0]._index;
-    let type = this.state.items[0]._type;
+    if(this.state.items.length != 0){
+      let index = this.state.items[0]._index;
+      let type = this.state.items[0]._type;
       let body = {
         "doc": this.bodyEdit
       };
@@ -744,6 +771,7 @@ export default class extends Component {
           .then(
             (result) => {
               setTimeout(function() { this.Search(this.state.searchValue, this.pager.currentPageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
+              this.bodyEdit = {};
             },
             (error) => {
             }

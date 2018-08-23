@@ -5,7 +5,18 @@
 ---
 ## Features 
 
-    * add field to the index *
+    - add field to the index 
+    
+    - add document to the index
+    
+    - edit document
+    
+    - delete document
+    
+    - search documents
+    
+    - classify documents
+    
 
 ## How to use Doc Editor
 

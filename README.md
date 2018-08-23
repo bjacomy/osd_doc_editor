@@ -3,7 +3,11 @@
 > Doc Editor plugin for Kibana that edits documents (add, edit, delete, search, classification)
 
 ---
-## demo
+## Features 
+
+    * add field to the index *
+
+## How to use Doc Editor
 
 ### add field to the index
 
@@ -23,7 +27,7 @@
 
 
 
-## development
+## Development
 
 See the [kibana contributing guide](https://github.com/elastic/kibana/blob/master/CONTRIBUTING.md) for instructions setting up your development environment. Once you have completed that, use the following npm tasks.
 

@@ -1,6 +1,6 @@
 {
   "name": "doc-editor",
-  "version": "6.3.2",
+  "version": "6.3.2-1",
   "description": "An awesome Kibana plugin that create label for elasticsearch indices",
   "main": "index.js",
   "kibana": {

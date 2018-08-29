@@ -414,7 +414,7 @@ export default class extends Component {
     var index = Object.keys(this.mapping)[0]
     var type = Object.keys(this.mapping[Object.keys(this.mapping)[0]]["mappings"])[0];
         var body = {};var query = {};var sort = [];
-        if(from < 14000)
+        if(from < 10000)
         { sort.push({"_id" : "asc"});
           body["from"] = from;
           body["size"] = itemPP;}

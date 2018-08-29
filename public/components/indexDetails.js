@@ -331,11 +331,19 @@ export default class extends Component {
               this.pager = new Pager(total , itemPPage);
               if(this.pager.totalPages - 1 == pageIndex){
                 if(total != itemPPage){
-                  this.setState({
-                    items: newItems,
-                    lastItemIndex: (total % itemPPage) - 1,
-                    currentPageIndex: this.pager.currentPageIndex
-                  });
+                  if(this.state.total % itemPPage == 0){
+                    this.setState({
+                      items: newItems,
+                      lastItemIndex: itemPPage - 1,
+                      currentPageIndex: this.pager.currentPageIndex
+                    });
+                  }else {
+                    this.setState({
+                      items: newItems,
+                      lastItemIndex: (total % itemPPage) - 1,
+                      currentPageIndex: this.pager.currentPageIndex
+                    });
+                  }
                 }else {
                   this.setState({
                     items: newItems,
@@ -406,16 +414,21 @@ export default class extends Component {
     var index = Object.keys(this.mapping)[0]
     var type = Object.keys(this.mapping[Object.keys(this.mapping)[0]]["mappings"])[0];
         var body = {};var query = {};var sort = [];
-        if(from < 10000)
+        if(from < 14000)
         { sort.push({"_id" : "asc"});
           body["from"] = from;
           body["size"] = itemPP;}
         else
         { sort.push({"_id" : "desc"});
           if(((from/itemPP)+1) == this.pager.totalPages){
-            body["size"] = (this.pager.totalItems) % itemPP;
-            body["from"] = 0;}
-          else
+            if (this.pager.totalItems % itemPP == 0) {
+              body["size"] = itemPP;
+              body["from"] = 0;
+            }else {
+              body["size"] = (this.pager.totalItems) % itemPP;
+              body["from"] = 0;
+            }
+          }else
           {
             body["from"] = (this.pager.totalItems) % ((from/itemPP)+1);
             body["size"] = itemPP;
@@ -483,6 +496,13 @@ export default class extends Component {
                   items: result.hits.hits,
                   firstItemIndex: 0,
                   lastItemIndex: result.hits.total - 1,
+                  total:result.hits.total
+                });
+              }else if(this.state.total % itemPP == 0){
+                this.setState({
+                  items: result.hits.hits,
+                  firstItemIndex: 0,
+                  lastItemIndex: itemPP - 1,
                   total:result.hits.total
                 });
               }else {
@@ -571,7 +591,7 @@ export default class extends Component {
   onChangeItemsPerPage = itemsPerPage => {
     var pageIndex = 0;
     this.pager.setItemsPerPage(itemsPerPage);
-    var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * itemsPerPage, itemsPerPage), 500);
+    setTimeout(function() { this.Search(this.state.searchValue, pageIndex * itemsPerPage, itemsPerPage) }.bind(this), 1000);
     this.setState({
       itemsPerPage,
       itemIdToExpandedRowMap: {},
@@ -579,7 +599,8 @@ export default class extends Component {
   }
 
   onChangePage = pageIndex => {
-    var exempleTimeout = setTimeout(this.Search(this.state.searchValue, pageIndex * this.state.itemsPerPage, this.state.itemsPerPage), 500);
+    console.log(pageIndex);
+    setTimeout(function() { this.Search(this.state.searchValue, pageIndex * this.state.itemsPerPage, this.state.itemsPerPage) }.bind(this), 1000);
     this.setState({
       itemIdToExpandedRowMap: {},
     });

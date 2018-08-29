@@ -2,7 +2,7 @@
 AF_REPO_FOR_ES="https://sfy-metriks-registry-prod.af.multis.p.fti.net/sfy-idem_generic_estack/kibana/plugins"
 
 PLUGINS=(
-  "labeling-plugin" "labeling-plugin-6.2.2-2.zip" ""
+  "doc-editor" "doc-editor-6.3.2-1.zip" ""
 )
 
 if [ -z "$USER" ]
@@ -27,4 +27,3 @@ function upload() {
 }
 
 upload
-

@@ -331,7 +331,7 @@ export default class extends Component {
               this.pager = new Pager(total , itemPPage);
               if(this.pager.totalPages - 1 == pageIndex){
                 if(total != itemPPage){
-                  if(this.state.total % itemPPage == 0){
+                  if(total % itemPPage == 0){
                     this.setState({
                       items: newItems,
                       lastItemIndex: itemPPage - 1,
@@ -441,19 +441,6 @@ export default class extends Component {
         var fields = this.searchTab;
         if(varS != ''){
           if(varS.indexOf(":") != -1){
-              if (varS.lastIndexOf(":") == varS.indexOf(":")) {
-                var multi_match = {};
-                var query = {};
-                body["sort"] = sort;
-                var searchField = varS.split(":");
-                multi_match["default_field"] = searchField[0];
-                multi_match["query"] = searchField[1];
-                query["query_string"] = multi_match;
-                body["query"] = query;
-                body["size"] = itemPP;
-                body["from"] = from;
-              }
-              else {
                 var multi_match = {};
                 var query = {};
                 body["sort"] = sort;
@@ -462,7 +449,6 @@ export default class extends Component {
                 body["query"] = query;
                 body["size"] = itemPP;
                 body["from"] = from;
-              }
           }else{
                 var multi_match = {};
                 var query = {};
@@ -498,7 +484,7 @@ export default class extends Component {
                   lastItemIndex: result.hits.total - 1,
                   total:result.hits.total
                 });
-              }else if(this.state.total % itemPP == 0){
+              }else if(result.hits.total % itemPP == 0){
                 this.setState({
                   items: result.hits.hits,
                   firstItemIndex: 0,

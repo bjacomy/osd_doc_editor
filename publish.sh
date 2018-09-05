@@ -2,7 +2,7 @@
 AF_REPO_FOR_ES="https://sfy-metriks-registry-prod.af.multis.p.fti.net/sfy-idem_generic_estack/kibana/plugins"
 
 PLUGINS=(
-  "doc-editor" "doc-editor-6.3.2-1.zip" ""
+  "doc-editor" "doc-editor-6.3.2-2.zip" ""
 )
 
 if [ -z "$USER" ]

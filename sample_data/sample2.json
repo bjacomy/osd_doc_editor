@@ -1,0 +1,20 @@
+[
+  { "index" : { "_index" : "melvis-platforms", "_id" : "loghosts" } },
+  { "id": "loghosts", "description": "loghosts", "domain": "" },
+  { "index" : { "_index" : "melvis-platforms", "_id" : "onyx" } },
+  { "id": "onyx", "description": "onyx", "domain": "" },
+  { "index" : { "_index" : "melvis-platforms", "_id" : "ref05" } },
+  { "id": "ref05", "description": "ref05", "domain": "" },
+  { "index" : { "_index" : "melvis-platforms", "_id" : "ref04" } },
+  { "id": "ref04", "description": "ref04", "domain": "" },
+  { "index" : { "_index" : "melvis-platforms", "_id" : "ref01" } },
+  { "id": "ref01", "description": "ref01", "domain": "" },
+  { "index" : { "_index" : "melvis-platforms", "_id" : "search" } },
+  { "id": "search", "description": "search", "domain": "" },
+  { "index" : { "_index" : "melvis-platforms", "_id" : "adstat" } },
+  { "id": "adstat", "description": "adstat", "domain": "" },
+  { "index" : { "_index" : "melvis-platforms", "_id" : "basic" } },
+  { "id": "basic", "description": "basic", "domain": "" },
+  { "index" : { "_index" : "melvis-platforms", "_id" : "eui" } },
+  { "id": "eui", "description": "eui", "domain": "" }
+]

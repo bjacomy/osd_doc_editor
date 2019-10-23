@@ -1,3 +1,0 @@
-[submodule "sandbox"]
-	path = sandbox
-	url = git@ssh.code.search.hbx.geo.francetelecom.fr:metriks/instance/sandbox.git

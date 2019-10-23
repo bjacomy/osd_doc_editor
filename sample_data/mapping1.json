@@ -1,0 +1,70 @@
+{
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "name": {
+        "type": "text",
+        "fielddata": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "shortDesc": {
+        "type": "text"
+      },
+      "state": {
+        "type": "keyword"
+      },
+      "urls": {
+        "type": "nested",
+        "properties": {
+            "name": {
+              "type": "keyword"
+            },
+            "url": {
+              "type": "keyword"
+            }
+          }
+      },
+      "currentElasticVersion": {
+        "type": "keyword"
+      },
+      "platformId": {
+        "type": "keyword"
+      },
+      "createdDate": {
+        "type": "date",
+        "format": "date_time"
+      },      
+      "contacts": {
+        "type": "nested",
+        "properties": {
+          "id": {
+            "type": "keyword"
+          },
+          "name": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              }
+            }
+          },
+          "contactType": {
+            "type": "keyword"
+          },
+          "role": {
+            "type": "keyword"
+          },
+          "mail": {
+            "type": "keyword"
+          }
+        }
+      }
+    }
+  }
+}

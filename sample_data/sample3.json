@@ -1,0 +1,16 @@
+[
+  { "index" : { "_index" : "melvis-index-stats", "_id" : "pfs_aaas" } },
+  {"index_prefix": "pfs_aaas","docs_total": 11367010,"size_total": 2684354560,"size_max": 5368709120,"index_number_total": 31,"index_number_max": 31,"views": ["ccl", "bac_a_sable"]},
+  { "index" : { "_index" : "melvis-index-stats", "_id" : "pfs_adfront" } },
+  {"index_prefix": "pfs_adfront","docs_total": 1438627,"size_total": 149002649,"size_max": 2147483648,"index_number_total": 31,"index_number_max": 31,"views": ["test", "bac_a_sable"]},
+  { "index" : { "_index" : "melvis-index-stats", "_id" : "pfs_ael" } },
+  {"index_prefix": "pfs_ael","docs_total": 1791784935,"size_total": 1649267441664,"size_max": 3298534883328,"index_number_total": 31,"index_number_max": 31,"views": ["bac_a_sable"]},
+  { "index" : { "_index" : "melvis-index-stats", "_id" : "pfs_apigateway" } },
+  {"index_prefix": "pfs_apigateway","docs_total": 4018319118,"size_total": 4398046511104,"size_max": 4398046511104,"index_number_total": 29,"index_number_max": 31,"views": ["bac_a_sable"]},
+  { "index" : { "_index" : "melvis-index-stats", "_id" : "pfs_archivage" } },
+  {"index_prefix": "pfs_archivage","docs_total": 2995953,"size_total": 325477990,"size_max": 2147483648,"index_number_total": 31,"index_number_max": 31,"views": ["test", "bac_a_sable"]},
+  { "index" : { "_index" : "melvis-index-stats", "_id" : "pfs_astrolog" } },
+  {"index_prefix": "pfs_astrolog","docs_total": 224720873,"size_total": 85147726643,"size_max": 85899345920,"index_number_total": 18,"index_number_max": 31,"views": ["bac_a_sable"]},
+  { "index" : { "_index" : "melvis-index-stats", "_id" : "pfs_automation" } },
+  {"index_prefix": "pfs_automation","docs_total": 12093124,"size_total": 3865470566,"size_max": 5368709120,"index_number_total": 31,"index_number_max": 31,"views": ["bac_a_sable"]}
+]

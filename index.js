@@ -1,30 +1,66 @@
-import api from './server/routes';
+
+import { i18n } from '@kbn/i18n'
+
+import serverRoute from './server/routes/doc_editor_routes'
 
 export default function (kibana) {
   return new kibana.Plugin({
     require: ['elasticsearch'],
-
+    name: 'doc-editor',
     uiExports: {
-      // Register the app component of our plugin to uiExports
       app: {
-        // The title of the app (will be shown to the user)
         title: 'Doc Editor',
-        // An description of the application.
-        description: 'An awesome Kibana plugin',
-        // The require reference to the JavaScript file for this app
+        description: 'Easily edit documents inside your elasticsearch indices',
         main: 'plugins/doc-editor/app',
-        // The require reference to the icon of the app
-        icon: 'plugins/doc-editor/edit.png'
+        euiIconType: 'documentEdit'
       }
     },
 
-    // The init method will be executed when the Kibana server starts and loads
-    // this plugin. It is used to set up everything that you need.
-    init(server, options) {
-      // Just call the api module that we imported above (the server/routes.js file)
-      // and pass the server to it, so it can register several API interfaces at the server.
-      api(server);
-    }
+    config(Joi) {
+      return Joi.object({
+        enabled: Joi.boolean().default(true),
+      }).default()
+    },
 
-  });
-};
+    init(server, options) { // eslint-disable-line no-unused-vars
+        const xpackMainPlugin = server.plugins.xpack_main
+        if (xpackMainPlugin) {
+          const featureId = 'doc-editor'
+
+          xpackMainPlugin.registerFeature({
+            id: featureId,
+            name: i18n.translate('docEditor.featureRegistry.featureName', {
+              defaultMessage: 'doc-editor',
+            }),
+            navLinkId: featureId,
+            icon: 'questionInCircle',
+            app: [featureId, 'kibana'],
+            catalogue: [],
+            privileges: {
+              all: {
+                api: [],
+                savedObject: {
+                  all: [],
+                  read: [],
+                },
+                ui: ['show'],
+              },
+              read: {
+                api: [],
+                savedObject: {
+                  all: [],
+                  read: [],
+                },
+                ui: ['show'],
+              },
+            },
+          })
+        }
+
+      // Add server routes and initialize the plugin here
+      const adminCluster = server.plugins.elasticsearch.getCluster('admin')
+      const dataCluster = server.plugins.elasticsearch.getCluster('data')
+      serverRoute(server, adminCluster, dataCluster)
+    }
+  })
+}

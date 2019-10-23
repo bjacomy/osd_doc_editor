@@ -1,8 +1,9 @@
 #!/bin/bash
-AF_REPO_FOR_ES="https://sfy-metriks-registry-prod.af.multis.p.fti.net/sfy-idem_generic_estack/kibana/plugins"
+AF_REPO_FOR_ES="https://sfy-metriks-registry-prod.artifactory.si.francetelecom.fr/sfy-idem_generic_estack/kibana/plugins"
 
 PLUGINS=(
-  "doc-editor" "doc-editor-6.3.2-2.zip" ""
+  "doc-editor" "doc-editor-7.4.0-latest.zip" ""
+  "doc-editor" "doc-editor-7.4.0-1.zip" ""
 )
 
 if [ -z "$USER" ]

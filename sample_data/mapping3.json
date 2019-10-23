@@ -1,0 +1,39 @@
+{
+  "mappings" : {
+    "properties" : {
+      "docs_total" : {
+        "type" : "long"
+      },
+      "index_number_max" : {
+        "type" : "long"
+      },
+      "index_number_total" : {
+        "type" : "long"
+      },
+      "index_prefix" : {
+        "type" : "text",
+        "fields" : {
+          "keyword" : {
+            "type" : "keyword",
+            "ignore_above" : 256
+          }
+        }
+      },
+      "size_max" : {
+        "type" : "long"
+      },
+      "size_total" : {
+        "type" : "long"
+      },
+      "views" : {
+        "type" : "text",
+        "fields" : {
+          "keyword" : {
+            "type" : "keyword",
+            "ignore_above" : 256
+          }
+        }
+      }
+    }
+  }    
+}

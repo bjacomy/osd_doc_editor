@@ -73,7 +73,6 @@ export default class extends Component {
       })
       .then(res => res.json())
       .then(result => {
-
         let mappings = result[index]["mappings"]
 
         let indexProps = mappings["properties"]

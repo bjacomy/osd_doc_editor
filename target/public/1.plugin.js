@@ -622,7 +622,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     };
 
     try {
-      let result = (await axios__WEBPACK_IMPORTED_MODULE_11___default.a.post(`../api/doc-editor/${this.index}/_search`, requestBody)).data;
+      let rawResult = await axios__WEBPACK_IMPORTED_MODULE_11___default.a.post(`../api/doc-editor/${this.index}/_search`, requestBody);
+      let result = rawResult.data;
       this.pager = new _elastic_eui__WEBPACK_IMPORTED_MODULE_12__["Pager"](result.hits.total.value, size);
       this.setState({
         search: {

@@ -358,7 +358,6 @@ export default class extends Component {
       try {
         let response
         if (applyByQueryOnAllDocs) {
-
           let script = Object.keys(docBody)
             .map(key => `ctx._source.${key} = \"${docBody[key]}\"`)
             .join(';')

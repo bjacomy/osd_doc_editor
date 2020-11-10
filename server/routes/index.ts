@@ -1,20 +1,21 @@
 import { IRouter } from '../../../../src/core/server';
 import { schema } from '@kbn/config-schema';
 
+// Pattern for a simple route
 export function defineRoutes(router: IRouter) {
   router.get(
     {
       path: '/api/doc_editor/example',
-      validate: false,
+      validate: false
     },
     async (context, request, response) => {
       return response.ok({
         body: {
           time: new Date().toISOString(),
-        },
-      });
+        }
+      })
     }
-  );
+  )
 
     // GET indices
     router.get(
@@ -32,7 +33,7 @@ export function defineRoutes(router: IRouter) {
               }
             })
         } catch (err) {
-          console.log('error _search request: ', err)
+          console.log('Error getting indices: ', err)
           return response.notFound()
         }
       }
@@ -57,7 +58,7 @@ export function defineRoutes(router: IRouter) {
           })
           return response.ok({body: data})
         } catch (err) {
-          console.log('error _search request: ', err)
+          console.log('Error searching: ', err)
           return response.notFound()
         }
     })
@@ -79,7 +80,24 @@ export function defineRoutes(router: IRouter) {
         }
       },
       async (context, request, response) => {
-        let body = {
+        type Body = {
+          aggs: {
+            suggest: {
+              terms: {
+                field: string,
+                size: number
+              }
+            }
+          },
+          size: number,
+          query?: {
+            prefix: {
+              [key: string]: string
+            }
+          }
+        }
+
+        let body: Body = {
           aggs: {
             suggest: {
               terms: {
@@ -107,11 +125,11 @@ export function defineRoutes(router: IRouter) {
         try {
           const data = (await context.core.elasticsearch.legacy.client.callAsInternalUser('search', {
             index: request.params.name,
-            body: request.body
-          })).body.aggregations.suggest.buckets
+            body
+          })).aggregations.suggest.buckets
           return response.ok({body: data})
         } catch (err) {
-          console.log('error _search request: ', err)
+          console.log('Error searching top 10: ', err)
           return response.notFound()
         }
       }
@@ -134,7 +152,7 @@ export function defineRoutes(router: IRouter) {
           })
           return response.ok({body: data})
         } catch (err) {
-          console.log('error mapping data ', err)
+          console.log('Error getting mapping: ', err)
           return response.notFound()
         }
       }
@@ -159,7 +177,7 @@ export function defineRoutes(router: IRouter) {
           })
           return response.ok({body: data})
         } catch (err) {
-          console.log('error mapping data ', err)
+          console.log('Error putting mapping: ', err)
           return response.notFound()
         }
       }
@@ -179,103 +197,132 @@ export function defineRoutes(router: IRouter) {
       async (context, request, response) => {
         try {
           const ids = request.params.ids.split(",")
-          const updateAll = Promise.all(
+          const updateAllResult = await Promise.all(
             ids.map(async id => {
-              return await context.core.elasticsearch.legacy.client.callAsInternalUser('update', {
+              return context.core.elasticsearch.legacy.client.callAsInternalUser('update', {
                 index: request.params.index,
-                body: request.body,
+                body: {doc: request.body},
                 refresh: true,
                 id
               })
             })
           )
-          return response.ok({body: updateAll})
+          return response.ok({body: updateAllResult})
         } catch (err) {
-          console.log('error mapping data ', err)
+          console.log('Error updating any document by id: ', err)
           return response.notFound()
         }
       }
    )
 
-    // server.route({
-    //   path: '/api/doc-editor/{index}/_doc/{ids}/_update',
-    //   method: 'POST',
-    //   async handler(req) {
-    //     const ids = req.params.ids.split(",")
-    //     return Promise.all(
-    //       ids.map(async id => {
-    //         return await call(req, 'update', {
-    //           index: req.params.index,
-    //           body: {
-    //             doc: req.payload
-    //           },
-    //           refresh: true,
-    //           id
-    //         })
-    //       })
-    //     )
-    //   }
-    // })
-
-
-    /*
     // Update by query
-    server.route({
-      path: '/api/doc-editor/{index}/_doc/_update_by_query',
-      method: 'POST',
-      async handler(req) {
-        return await call(req, 'updateByQuery', {
-          index: req.params.index,
-          body: JSON.stringify(req.payload),
-          conflicts: 'proceed',
-          refresh: true
-        })
+    router.post(
+      {
+        path: '/api/doc-editor/{index}/_doc/_update_by_query',
+        validate: {
+          params: schema.object(
+            {index: schema.string()}
+          ),
+           body: schema.any()
+        }
+      },
+      async (context, request, response) => {
+        try {
+          const data = await context.core.elasticsearch.legacy.client.callAsInternalUser('updateByQuery', {
+            index: request.params.index,
+            body: JSON.stringify(request.body),
+            conflicts: 'proceed',
+            refresh: true
+          })
+          return response.ok({body: data})
+        } catch (err) {
+          console.log('Error update by query: ', err)
+          return response.notFound()
+        }
       }
-    })
+    )
 
     // Add new document
-    server.route({
-      path: '/api/doc-editor/{index}/_doc',
-      method: 'POST',
-      async handler(req) {
-        return await call(req, 'index', {
-          index: req.params.index,
-          body: req.payload,
-          refresh: true
-        })
+    router.post(
+      {
+        path: '/api/doc-editor/{index}/_doc',
+        validate: {
+          params: schema.object(
+            {index: schema.string()}
+          ),
+           body: schema.any()
+        }
+      },
+      async (context, request, response) => {
+        try {
+          const data = await context.core.elasticsearch.legacy.client.callAsInternalUser('index', {
+            index: request.params.index,
+            body: request.body,
+            refresh: true
+          })
+          return response.ok({body: data})
+        } catch (err) {
+          console.log('Error adding document: ', err)
+          return response.notFound()
+        }
       }
-    })
+    )
 
     // Delete one or multiple document by ids
-    server.route({
-      path: '/api/doc-editor/{index}/_doc/{ids}',
-      method: 'DELETE',
-      async handler(req) {
-        const ids = req.params.ids.split(",")
-        return Promise.all(
-          ids.map(async id => {
-            return await call(req, 'delete', {
-              index: req.params.index,
-              id: id,
-              refresh: true
+    router.delete(
+      {
+        path: '/api/doc-editor/{index}/_doc/{ids}',
+        validate: {
+          params: schema.object(
+            {ids: schema.string(), index: schema.string()}
+          )
+        }
+      },
+      async (context, request, response) => {
+        try {
+          const ids = request.params.ids.split(",")
+          const deleteAll = await Promise.all(
+            ids.map(async id => {
+              return context.core.elasticsearch.legacy.client.callAsInternalUser('delete', {
+                index: request.params.index,
+                refresh: true,
+                id
+              })
             })
-          })
-        )
+          )
+          return response.ok({body: deleteAll})
+        } catch (err) {
+          console.log('Error deleting any document by id: ', err)
+          return response.notFound()
+        }
       }
-    })
+    )
 
     // Delete documents by query
-    server.route({
-      path: '/api/doc-editor/{index}/_doc/_delete_by_query',
-      method: 'POST',
-      async handler(req) {
-        return await call(req, 'deleteByQuery', {
-          index: req.params.index,
-          body: req.payload,
-          conflicts: 'proceed',
-          refresh: true
-        })
+    router.post(
+      {
+        path: '/api/doc-editor/{index}/_doc/_delete_by_query',
+        validate: {
+          params: schema.object(
+            {index: schema.string()}
+          ),
+           body: schema.any()
+        }
+      },
+      async (context, request, response) => {
+        try {
+          const data = await context.core.elasticsearch.legacy.client.callAsInternalUser('deleteByQuery', {
+            index: request.params.index,
+            body: request.body,
+            refresh: true,
+            conflicts: 'proceed'
+          })
+          return response.ok({body: data})
+        } catch (err) {
+          console.log('Error deleting documents by query: ', err)
+          return response.notFound()
+        }
       }
-    })
-    */
+    )
+
 }

@@ -8,6 +8,7 @@
 
 # production
 /build
+/target
 
 # log
 npm-debug.log*

@@ -1,16 +1,30 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "esModuleInterop": true,
     "outDir": "./target",
-    "skipLibCheck": true
+    "allowUnusedLabels": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "skipLibCheck": true,
+    "alwaysStrict": false,
+    "noImplicitUseStrict": false,
+    "allowJs": true
   },
   "include": [
     "index.ts",
-    "common/**/*.ts",
     "public/**/*.ts",
     "public/**/*.tsx",
     "server/**/*.ts",
-    "../../typings/**/*",
+    "common/**/*.ts",
+    "../../typings/**/*"
   ],
-  "exclude": []
+  "exclude": [
+    "public/**/*.test.ts",
+    "public/**/*.test.tsx",
+    "server/**/*.test.ts",
+    "../../src/**/*",
+    "**/request.ts",
+    "src/**/*"
+  ]
 }

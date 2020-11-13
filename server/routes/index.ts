@@ -1,5 +1,6 @@
-import { IRouter } from '../../../../src/core/server';
-import { schema } from '@kbn/config-schema';
+import { IRouter } from '../../../../src/core/server'
+import { schema } from '@kbn/config-schema'
+import { Body } from './types'
 
 // Pattern for a simple route
 export function defineRoutes(router: IRouter) {
@@ -47,7 +48,12 @@ export function defineRoutes(router: IRouter) {
           params: schema.object(
             {name: schema.string()}
           ),
-          body: schema.any()
+          body: schema.object(
+            {from: schema.maybe(schema.number()),
+              size:  schema.maybe(schema.number()),
+              sort: schema.maybe(schema.any()),
+              query: schema.maybe(schema.any())}
+          )
         }
       },
       async (context, request, response) => {
@@ -80,22 +86,6 @@ export function defineRoutes(router: IRouter) {
         }
       },
       async (context, request, response) => {
-        type Body = {
-          aggs: {
-            suggest: {
-              terms: {
-                field: string,
-                size: number
-              }
-            }
-          },
-          size: number,
-          query?: {
-            prefix: {
-              [key: string]: string
-            }
-          }
-        }
 
         let body: Body = {
           aggs: {

@@ -8,8 +8,7 @@
     "noUnusedParameters": false,
     "skipLibCheck": true,
     "alwaysStrict": false,
-    "noImplicitUseStrict": false,
-    "allowJs": true
+    "noImplicitUseStrict": false
   },
   "include": [
     "index.ts",

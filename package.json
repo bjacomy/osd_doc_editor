@@ -2,30 +2,19 @@
   "name": "doc-editor",
   "version": "7.9.1",
   "description": "Easily edit documents inside your elasticsearch indices",
+  "kibana": {
+    "version": "kibana",
+    "templateVersion": "1.0.0"
+  },
   "scripts": {
-    "build": "rm -rf ./target && tsc",
     "preinstall": "node ../../preinstall_check",
     "kbn": "node ../../scripts/kbn",
     "es": "node ../../scripts/es",
-    "test": "grunt test",
-    "test:karma": "grunt test:karma",
-    "test:karma:debug": "grunt test:karmaDebug",
-    "test:jest": "node ../../scripts/jest",
-    "test:jest_integration": "node ../../scripts/jest_integration",
-    "test:mocha": "node ../../scripts/mocha",
-    "test:mocha:coverage": "grunt test:mochaCoverage",
-    "test:ftr": "node ../../scripts/functional_tests",
-    "test:ftr:server": "node ../../scripts/functional_tests_server",
-    "test:ftr:runner": "node ../../scripts/functional_test_runner",
-    "test:coverage": "grunt test:coverage",
-    "start": "node ../../scripts/kibana --dev",
-    "debug": "node --nolazy --inspect ../../scripts/kibana --dev",
-    "debug-break": "node --nolazy --inspect-brk ../../scripts/kibana --dev",
-    "lint": "yarn run lint:es && yarn run lint:sass",
-    "lint:es": "node ../../scripts/eslint",
-    "lint:sass": "node ../../scripts/sasslint",
-    "build:types": "tsc --p ../../tsconfig.types.json",
-    "kbn:bootstrap": "node ../../scripts/register_git_hook"
+    "lint": "../../node_modules/.bin/eslint .",
+    "start": "../../node_modules/.bin/plugin-helpers start",
+    "test:server": "../../node_modules/.bin/plugin-helpers test:server",
+    "test:browser": "../../node_modules/.bin/plugin-helpers test:browser",
+    "build": "../../node_modules/.bin/plugin-helpers build"
   },
   "dependencies": {
     "react-fontawesome": "^1.7.1",
@@ -36,7 +25,6 @@
   },
   "devDependencies": {
     "eslint": "^7.13.0",
-    "tsc": "^1.20150623.0",
     "typescript": "3.9.5",
     "gulp-rename": "2.0.0"
   }

@@ -9,6 +9,7 @@ export class DocEditorPlugin implements Plugin<DocEditorPluginSetup, DocEditorPl
     core.application.register({
       id: 'docEditor',
       title: PLUGIN_NAME,
+      euiIconType: 'documentEdit',
       async mount(params: AppMountParameters) {
         // Load application bundle
         const { renderApp } = await import('./application');

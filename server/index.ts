@@ -1,10 +1,10 @@
-import { schema, TypeOf } from '@kbn/config-schema';
-import type { PluginConfigDescriptor } from 'kibana/server';
+import { schema, TypeOf } from '@osd/config-schema';
+import type { PluginConfigDescriptor } from 'opensearchDashboards/server';
 import {  PluginInitializerContext } from '../../../src/core/server';
 import { DocEditorPlugin } from './plugin';
 
 //  This exports static code and TypeScript types,
-//  as well as, Kibana Platform `plugin()` initializer.
+//  as well as, opensearchDashboards Platform `plugin()` initializer.
 
 const configSchema = schema.object({
   enabled: schema.boolean({ defaultValue: true })

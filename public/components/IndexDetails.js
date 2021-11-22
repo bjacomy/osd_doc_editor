@@ -82,8 +82,8 @@ export default class extends Component {
 
     this.init()
 
-    axios.defaults.headers.post['kbn-xsrf']   = "reporting"
-    axios.defaults.headers.delete['kbn-xsrf'] = "reporting"
+    axios.defaults.headers.post['osd-xsrf']   = "reporting"
+    axios.defaults.headers.delete['osd-xsrf'] = "reporting"
 
     this.search                    = this.search.bind(this)
     this.toggleSelectItem          = this.toggleSelectItem.bind(this)

@@ -18,7 +18,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { I18nProvider } from '@kbn/i18n/react';
+import { I18nProvider } from '@osd/i18n/react';
 import { BrowserRouter as Router } from 'react-router-dom';
 
 import {

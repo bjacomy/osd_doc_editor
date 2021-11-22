@@ -126,7 +126,7 @@ export default class extends Component {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'kbn-xsrf': 'reporting'
+          'osd-xsrf': 'reporting'
         },
         body: JSON.stringify(body)
       })

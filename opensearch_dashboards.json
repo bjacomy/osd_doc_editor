@@ -1,0 +1,9 @@
+{
+  "id": "docEditor",
+  "version": "1.2.0",
+  "server": true,
+  "ui": true,
+  "requiredPlugins": ["navigation"],
+  "optionalPlugins": [],
+  "configPath": "doc-editor"
+}

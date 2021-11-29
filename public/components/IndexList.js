@@ -178,7 +178,7 @@ export default class extends Component {
         <EuiSpacer size="l" />
 
         <EuiTitle>
-          <h2 style={{ fontWeight: '600'}}>Elasticsearch indices</h2>
+          <h2 style={{ fontWeight: '600'}}>opensearch indices</h2>
         </EuiTitle>
         <EuiSpacer size="l" />
 

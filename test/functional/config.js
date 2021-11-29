@@ -1,5 +1,5 @@
 import { resolve } from 'path';
-import { REPO_ROOT } from '@kbn/utils';
+import { REPO_ROOT } from '@osd/utils';
 
 import { MyServiceProvider } from './services/my_service';
 import { MyAppPageProvider } from './services/my_app_page';
@@ -10,7 +10,7 @@ export default async function ({ readConfigFile }) {
 
   // read the {kib} config file so that we can utilize some of
   // its services and PageObjects
-  const kibanaConfig = await readConfigFile(resolve(REPO_ROOT, 'test/functional/config.js'));
+  const opensearchdashboardsConfig = await readConfigFile(resolve(REPO_ROOT, 'test/functional/config.js'));
 
   return {
     // list paths to the files that contain your plugins tests
@@ -22,14 +22,14 @@ export default async function ({ readConfigFile }) {
     // available to your tests. If you don't specify anything here
     // only the built-in services will be available
     services: {
-      ...kibanaConfig.get('services'),
+      ...opensearchdashboardsConfig.get('services'),
       myService: MyServiceProvider,
     },
 
     // just like services, PageObjects are defined as a map of
     // names to Providers. Merge in {kib}'s or pick specific ones
     pageObjects: {
-      management: kibanaConfig.get('pageObjects.management'),
+      management: opensearchdashboardsConfig.get('pageObjects.management'),
       myApp: MyAppPageProvider,
     },
 
@@ -38,7 +38,7 @@ export default async function ({ readConfigFile }) {
     // Merge urls for your plugin with the urls defined in
     // {kib}'s config in order to use this helper
     apps: {
-      ...kibanaConfig.get('apps'),
+      ...opensearchdashboardsConfig.get('apps'),
       myApp: {
         pathname: '/app/my_app',
       }

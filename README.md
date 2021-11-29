@@ -1,6 +1,6 @@
 # Doc Editor
 
-> Doc Editor plugin for Kibana that edits documents (add, edit, delete, search, classification)
+> Doc Editor plugin for opensearchdashboards that edits documents (add, edit, delete, search, classification)
 
 ---
 
@@ -22,44 +22,44 @@
 
 ### add field to the index
 
-![Alt Text](https://gitlab.si.francetelecom.fr/melvis/kibana-plugins/doc-editor/raw/master/demo/add-field-video-plugin.gif)
+![Alt Text](https://gitlab.si.francetelecom.fr/melvis/opensearchdashboards-plugins/doc-editor/raw/master/demo/add-field-video-plugin.gif)
 
 ### add document to the index
 
-![Alt Text](https://gitlab.si.francetelecom.fr/melvis/kibana-plugins/doc-editor/raw/master/demo/add-document-video-plugin.gif)
+![Alt Text](https://gitlab.si.francetelecom.fr/melvis/opensearchdashboards-plugins/doc-editor/raw/master/demo/add-document-video-plugin.gif)
 
 ### edit and delete document
 
-![Alt Text](https://gitlab.si.francetelecom.fr/melvis/kibana-plugins/doc-editor/raw/master/demo/edit-delete-document-video-plugin.gif)
+![Alt Text](https://gitlab.si.francetelecom.fr/melvis/opensearchdashboards-plugins/doc-editor/raw/master/demo/edit-delete-document-video-plugin.gif)
 
 ### search and classify documents
 
-![Alt Text](https://gitlab.si.francetelecom.fr/melvis/kibana-plugins/doc-editor/raw/master/demo/search-classify-document-video-plugin.gif)
+![Alt Text](https://gitlab.si.francetelecom.fr/melvis/opensearchdashboards-plugins/doc-editor/raw/master/demo/search-classify-document-video-plugin.gif)
 
 ## development
 
-See the [kibana contributing guide](https://github.com/elastic/kibana/blob/master/CONTRIBUTING.md) for instructions setting up your development environment. Once you have completed that, use the following yarn scripts.
+See the [opensearchdashboards contributing guide](https://github.com/elastic/opensearchdashboards/blob/master/CONTRIBUTING.md) for instructions setting up your development environment. Once you have completed that, use the following yarn scripts.
 
-- `yarn kbn bootstrap`
+- `yarn osd bootstrap`
 
-  Install dependencies and crosslink Kibana and all projects/plugins.
+  Install dependencies and crosslink opensearchdashboards and all projects/plugins.
 
   > ***IMPORTANT:*** Use this script instead of `yarn` to install dependencies when switching branches, and re-run it whenever your dependencies change.
 
-- Launch an elasticsearch instance
+- Launch an opensearch instance
 
 ```bash
-# in kibana folder
-yarn es snapshot --version 7.4.0 -E "xpack.security.enabled=false" -E http.cors.enabled=true" -E "http.cors.allow-origin=*" -E "http.cors.allow-methods=OPTIONS,HEAD,GET,POST,PUT,DELETE" -E "http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,kbn-version"
+# in opensearchdashboards folder
+yarn es snapshot --version 7.4.0 -E "xpack.security.enabled=false" -E http.cors.enabled=true" -E "http.cors.allow-origin=*" -E "http.cors.allow-methods=OPTIONS,HEAD,GET,POST,PUT,DELETE" -E "http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,osd-version"
 
 ```
 
 - `yarn start`
 
-  Start kibana and have it include this plugin. You can pass any arguments that you would normally send to `bin/kibana`
+  Start opensearchdashboards and have it include this plugin. You can pass any arguments that you would normally send to `bin/opensearchdashboards`
 
     ```bash
-    yarn start --elasticsearch.hosts http://localhost:9220
+    yarn start --opensearch.hosts http://localhost:9220
     ```
 
 - `yarn build`
@@ -68,11 +68,11 @@ yarn es snapshot --version 7.4.0 -E "xpack.security.enabled=false" -E http.cors.
 
 - `yarn test`
 
-  Run jest test (you must have launch the snapshot of elasticsearch instance before).
+  Run jest test (you must have launch the snapshot of opensearch instance before).
 
 - `yarn coverage`
 
-  Run jest test with coverage (you must have launch the snapshot of elasticsearch instance before).
+  Run jest test with coverage (you must have launch the snapshot of opensearch instance before).
 
 - `yarn test:browser`
 

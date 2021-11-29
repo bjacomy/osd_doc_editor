@@ -76,7 +76,7 @@
     }
   },
   "messages": {
-    "docEditor.congratulationsText": "您已经成功创建第一个 Kibana 插件。",
+    "docEditor.congratulationsText": "您已经成功创建第一个 opensearchdashboards 插件。",
     "docEditor.congratulationsTitle": "恭喜!",
     "docEditor.helloWorldText": "{title} 您好，世界！",
     "docEditor.serverTimeText": "服务器时间（通过 API 调用）为 {time}"

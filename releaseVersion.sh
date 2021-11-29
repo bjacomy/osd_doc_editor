@@ -12,39 +12,39 @@ do
     case "${option}"
     in
         b) BUILD_VERSION=${OPTARG};;
-        k) KIBANA_VERSION=${OPTARG};;
+        k) opensearchdashboards_VERSION=${OPTARG};;
         u) USER=${OPTARG};;
         s) SKIP_INSTALL_DEPS="true"
     esac
 done
 
-# Check kibana version
-if [ -z ${KIBANA_VERSION} ]; then
-    echo -e "Options: -k <Kibana version> (mandatory)"
+# Check opensearchdashboards version
+if [ -z ${opensearchdashboards_VERSION} ]; then
+    echo -e "Options: -k <opensearchdashboards version> (mandatory)"
     echo -e "         -b <Build increment> (default to 1)"
     echo -e "         -u <User to log in Artifactory> (default to \$USER)"
     echo -e "         -s for skip dependencies install (default install deps)"
     exit;
 fi
 
-TAG_NAME=${KIBANA_VERSION}-${BUILD_VERSION}
-TAG_NAME_LATEST=${KIBANA_VERSION}-latest
+TAG_NAME=${opensearchdashboards_VERSION}-${BUILD_VERSION}
+TAG_NAME_LATEST=${opensearchdashboards_VERSION}-latest
 
 # Install (or not) dependencies
 echo
 if [ "${SKIP_INSTALL_DEPS}" = "false" ]; then
-    echo "Install Kibana dependencies..."
+    echo "Install opensearchdashboards dependencies..."
     echo
-    yarn kbn bootstrap
+    yarn osd bootstrap
 else
-    echo "Skip installing Kibana dependencies..."
+    echo "Skip installing opensearchdashboards dependencies..."
 fi
 
 # Build packages
 echo
-echo "Build Kibana plugin package..."
+echo "Build opensearchdashboards plugin package..."
 echo
-# yarn build -b ${TAG_NAME} -k ${KIBANA_VERSION}
+# yarn build -b ${TAG_NAME} -k ${opensearchdashboards_VERSION}
 
 echo
 echo "Create a package copy as latest..."
@@ -54,17 +54,17 @@ echo "cp build/${REPO}-${TAG_NAME}.zip build/${REPO}-${TAG_NAME_LATEST}.zip"
 
 # Artifactory publish section
 
-AF_REPO_FOR_ES="https://sfy-metriks-registry-prod.artifactory.si.francetelecom.fr/sfy-idem_generic_estack/kibana/plugins" # verifier si path OK !
+AF_REPO_FOR_ES="https://sfy-metriks-registry-prod.artifactory.si.francetelecom.fr/sfy-idem_generic_estack/opensearchdashboards/plugins" # verifier si path OK !
 
 # Create tag and release
 
 echo
 echo "Create Git tag for the new release"
-git tag -m "update to version ${KIBANA_VERSION} : Get uploaded artifacts in artifactory ${AF_REPO_FOR_ES}/doc-editor" ${KIBANA_VERSION} && git push --tags
+git tag -m "update to version ${opensearchdashboards_VERSION} : Get uploaded artifacts in artifactory ${AF_REPO_FOR_ES}/doc-editor" ${opensearchdashboards_VERSION} && git push --tags
 
 PLUGINS=(
-    "doc-editor" "doc-editor-${KIBANA_VERSION}-latest.zip" ""
-    "doc-editor" "doc-editor-${KIBANA_VERSION}-${BUILD_VERSION}.zip" ""
+    "doc-editor" "doc-editor-${opensearchdashboards_VERSION}-latest.zip" ""
+    "doc-editor" "doc-editor-${opensearchdashboards_VERSION}-${BUILD_VERSION}.zip" ""
 )
 
 if [ -z "$USER" ]

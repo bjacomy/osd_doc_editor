@@ -1,5 +1,5 @@
 #!/bin/bash
-AF_REPO_FOR_ES="https://sfy-metriks-registry-prod.artifactory.si.francetelecom.fr/sfy-idem_generic_estack/kibana/plugins"
+AF_REPO_FOR_ES="https://sfy-metriks-registry-prod.artifactory.si.francetelecom.fr/sfy-idem_generic_estack/opensearchdashboards/plugins"
 
 PLUGINS=(
   "doc-editor" "doc-editor-7.4.0-latest.zip" ""

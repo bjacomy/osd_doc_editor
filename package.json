@@ -1,10 +1,10 @@
 {
   "name": "doc-editor",
-  "version": "2.4.1",
+  "version": "2.5.0",
   "description": "Easily edit documents inside your opensearch indices",
   "opensearchDashboards": {
-    "version": "2.4.1",
-    "templateVersion": "2.4.1"
+    "version": "2.5.0",
+    "templateVersion": "2.5.0"
   },
   "scripts": {
     "osd": "node ../../scripts/osd",
@@ -21,7 +21,6 @@
   },
   "devDependencies": {
     "eslint": "^6.8.0",
-    "typescript": "4.0.2",
-    "gulp-rename": "2.0.0"
+    "typescript": "4.0.2"
   }
 }

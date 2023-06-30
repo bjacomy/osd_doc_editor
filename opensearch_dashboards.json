@@ -1,6 +1,6 @@
 {
   "id": "docEditor",
-  "version": "2.3.0",
+  "version": "2.4.1",
   "server": true,
   "ui": true,
   "requiredPlugins": ["navigation"],

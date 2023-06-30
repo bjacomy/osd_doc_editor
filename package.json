@@ -1,10 +1,10 @@
 {
   "name": "doc-editor",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "Easily edit documents inside your opensearch indices",
   "opensearchDashboards": {
-    "version": "2.5.0",
-    "templateVersion": "2.5.0"
+    "version": "2.6.0",
+    "templateVersion": "2.6.0"
   },
   "scripts": {
     "osd": "node ../../scripts/osd",

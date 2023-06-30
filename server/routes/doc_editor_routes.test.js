@@ -8,7 +8,7 @@ import mapping2 from '../../sample_data/mapping2.json'
 import mapping3 from '../../sample_data/mapping3.json'
 
 // BEGIN Init elasticsearc client
-import { Client } from '@elastic/elasticsearch'
+import { Client } from '@elastic/opensearch'
 
 const esClient = new Client({node: 'http://localhost:9200'})
 
@@ -219,7 +219,7 @@ describe('Put mapping on one existing index /api/doc-editor/{index}/_mapping', (
   })
 
   // // mapping type is no longer used in es 7.x
-  // see https://www.elastic.co/guide/en/elasticsearch/reference/7.x/removal-of-types.html
+  // see https://www.elastic.co/guide/en/opensearch/reference/7.x/removal-of-types.html
   const mappingTest = {
     "properties": {
       "title":  { "type": "text"}
@@ -470,7 +470,7 @@ describe('Delete one or multiple document by ids /api/doc-editor/{index}/_doc/{i
        meta:
         { context: null,
           request: expect.any(Object),
-          name: 'elasticsearch-js',
+          name: 'opensearch-js',
           connection: expect.any(Object),
           attempts: expect.any(Number),
           aborted: expect.any(Boolean) } }

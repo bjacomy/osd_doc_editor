@@ -1,6 +1,6 @@
 export default function (server, adminCluster, dataCluster) {
 
-  // Route example from the kibana generate plugin
+  // Route example from the opensearchDashboards generate plugin
   server.route({
     path: '/api/doc-editor/example',
     method: 'GET',
@@ -24,7 +24,7 @@ export default function (server, adminCluster, dataCluster) {
         if(response.metadata) {
           return Object.keys(response.metadata.indices)
         } 
-        // for es client : "@elastic/elasticsearch": "^7.4.0"
+        // for es client : "@elastic/opensearch": "^7.4.0"
         return Object.keys(response.body.metadata.indices)
       })
     }

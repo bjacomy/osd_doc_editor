@@ -1,8 +1,8 @@
 /*
- * Licensed to Elasticsearch B.V. under one or more contributor
+ * Licensed to opensearch B.V. under one or more contributor
  * license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright
- * ownership. Elasticsearch B.V. licenses this file to you under
+ * ownership. opensearch B.V. licenses this file to you under
  * the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,7 +18,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { I18nProvider } from '@kbn/i18n/react';
+import { I18nProvider } from '@osd/i18n/react';
 import { BrowserRouter as Router } from 'react-router-dom';
 
 import {

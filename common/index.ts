@@ -1,2 +1,2 @@
 export const PLUGIN_ID = 'docEditor';
-export const PLUGIN_NAME = 'doc-editor';
+export const PLUGIN_NAME = 'osd-doc-editor';

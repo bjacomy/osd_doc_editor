@@ -45,8 +45,8 @@ export default class extends Component {
       isPopoverOpen: false,
     }
 
-    axios.defaults.headers.post['kbn-xsrf'] = "reporting"
-    axios.defaults.headers.delete['kbn-xsrf'] = "reporting"
+    axios.defaults.headers.post['osd-xsrf'] = "reporting"
+    axios.defaults.headers.delete['osd-xsrf'] = "reporting"
   }
 
   onButtonClick = () => {

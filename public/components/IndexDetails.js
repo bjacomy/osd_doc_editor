@@ -82,8 +82,8 @@ export default class extends Component {
 
     this.init()
 
-    axios.defaults.headers.post['kbn-xsrf']   = "reporting"
-    axios.defaults.headers.delete['kbn-xsrf'] = "reporting"
+    axios.defaults.headers.post['osd-xsrf']   = "reporting"
+    axios.defaults.headers.delete['osd-xsrf'] = "reporting"
 
     this.search                    = this.search.bind(this)
     this.toggleSelectItem          = this.toggleSelectItem.bind(this)
@@ -655,9 +655,9 @@ export default class extends Component {
         <p>
           You should change your search query in the search bar. <br/>
           See the <a
-            href="https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-syntax"
+            href="https://www.elastic.co/guide/en/opensearch/reference/current/query-dsl-query-string-query.html#query-string-syntax"
             target='_blank'>
-            elasticsearch documentation
+            opensearch documentation
           </a> for more informations about the Query string syntax.
         </p>
       )

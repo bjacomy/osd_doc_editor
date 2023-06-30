@@ -1,13 +1,13 @@
 {
   "name": "doc-editor",
-  "version": "7.10.2",
-  "description": "Easily edit documents inside your elasticsearch indices",
-  "kibana": {
-    "version": "kibana",
-    "templateVersion": "1.0.0"
+  "version": "2.1.0",
+  "description": "Easily edit documents inside your opensearch indices",
+  "opensearchDashboards": {
+    "version": "2.1.0",
+    "templateVersion": "2.1.0"
   },
   "scripts": {
-    "kbn": "node ../../scripts/kbn",
+    "osd": "node ../../scripts/osd",
     "es": "node ../../scripts/es",
     "build": "yarn plugin-helpers build",
     "plugin-helpers": "node ../../scripts/plugin_helpers",

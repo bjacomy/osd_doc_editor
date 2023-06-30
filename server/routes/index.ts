@@ -1,5 +1,5 @@
 import { IRouter } from '../../../../src/core/server'
-import { schema } from '@kbn/config-schema'
+import { schema } from '@osd/config-schema'
 import { Body } from './types'
 
 // Pattern for a simple route
@@ -26,7 +26,7 @@ export function defineRoutes(router: IRouter) {
       },
       async (context, request, response) => {
         try {
-          const data = await context.core.elasticsearch.legacy.client.callAsCurrentUser('cluster.state')
+          const data = await context.core.opensearch.legacy.client.callAsCurrentUser('cluster.state')
             // Return just the names of all indices to the client.
             return response.ok({
               body: {
@@ -58,7 +58,7 @@ export function defineRoutes(router: IRouter) {
       },
       async (context, request, response) => {
         try {
-          const data = await context.core.elasticsearch.legacy.client.callAsCurrentUser('search', {
+          const data = await context.core.opensearch.legacy.client.callAsCurrentUser('search', {
             index: request.params.name,
             body: request.body
           })
@@ -113,7 +113,7 @@ export function defineRoutes(router: IRouter) {
         }
 
         try {
-          const data = (await context.core.elasticsearch.legacy.client.callAsCurrentUser('search', {
+          const data = (await context.core.opensearch.legacy.client.callAsCurrentUser('search', {
             index: request.params.name,
             body
           })).aggregations.suggest.buckets
@@ -137,7 +137,7 @@ export function defineRoutes(router: IRouter) {
       },
       async (context, request, response) => {
         try {
-          const data = await context.core.elasticsearch.legacy.client.callAsCurrentUser('indices.getMapping', {
+          const data = await context.core.opensearch.legacy.client.callAsCurrentUser('indices.getMapping', {
             index: request.params.index
           })
           return response.ok({body: data})
@@ -161,7 +161,7 @@ export function defineRoutes(router: IRouter) {
       },
       async (context, request, response) => {
         try {
-          const data = await context.core.elasticsearch.legacy.client.callAsCurrentUser('indices.putMapping', {
+          const data = await context.core.opensearch.legacy.client.callAsCurrentUser('indices.putMapping', {
             index: request.params.index,
             body: request.body
           })
@@ -189,7 +189,7 @@ export function defineRoutes(router: IRouter) {
           const ids = request.params.ids.split(",")
           const updateAllResult = await Promise.all(
             ids.map(async id => {
-              return context.core.elasticsearch.legacy.client.callAsCurrentUser('update', {
+              return context.core.opensearch.legacy.client.callAsCurrentUser('update', {
                 index: request.params.index,
                 body: {doc: request.body},
                 refresh: true,
@@ -218,7 +218,7 @@ export function defineRoutes(router: IRouter) {
       },
       async (context, request, response) => {
         try {
-          const data = await context.core.elasticsearch.legacy.client.callAsCurrentUser('updateByQuery', {
+          const data = await context.core.opensearch.legacy.client.callAsCurrentUser('updateByQuery', {
             index: request.params.index,
             body: JSON.stringify(request.body),
             conflicts: 'proceed',
@@ -245,7 +245,7 @@ export function defineRoutes(router: IRouter) {
       },
       async (context, request, response) => {
         try {
-          const data = await context.core.elasticsearch.legacy.client.callAsCurrentUser('index', {
+          const data = await context.core.opensearch.legacy.client.callAsCurrentUser('index', {
             index: request.params.index,
             body: request.body,
             refresh: true
@@ -273,7 +273,7 @@ export function defineRoutes(router: IRouter) {
           const ids = request.params.ids.split(",")
           const deleteAll = await Promise.all(
             ids.map(async id => {
-              return context.core.elasticsearch.legacy.client.callAsCurrentUser('delete', {
+              return context.core.opensearch.legacy.client.callAsCurrentUser('delete', {
                 index: request.params.index,
                 refresh: true,
                 id
@@ -301,7 +301,7 @@ export function defineRoutes(router: IRouter) {
       },
       async (context, request, response) => {
         try {
-          const data = await context.core.elasticsearch.legacy.client.callAsCurrentUser('deleteByQuery', {
+          const data = await context.core.opensearch.legacy.client.callAsCurrentUser('deleteByQuery', {
             index: request.params.index,
             body: request.body,
             refresh: true,
